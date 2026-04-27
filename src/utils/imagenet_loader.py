@@ -56,7 +56,7 @@ class ImageNet(Dataset):
         for file in self.files:
             print("> Loading {}".format(file))
             fname = os.path.join(self.root_dir, file)
-            data = np.load(fname)
+            data = np.load(fname, allow_pickle = True)
             self.datasets.append(data["data"].reshape(-1, 3, img_size, img_size))
             self.labels.append(data["labels"])
             for i in range(self.datasets[-1].shape[0]):
