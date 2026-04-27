@@ -1,5 +1,5 @@
 #specify the data path
-data_path="/Users/anton/Library/CloudStorage/GoogleDrive-max.anton.pfeifer@gmail.com/Meine Ablage/02 Project/Bachelorarbeit/Probabilistische Inferenz/LVD-PG/data"
+data_path="/Users/anton/Documents/development/lvd-pg/data"
 #train teacher DGM
 cd exps/LVD_for_imagenet/
 python3 train_vqvae2_model.py -id --data-path "$data_path"
