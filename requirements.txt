@@ -1,0 +1,8 @@
+scikit-learn
+torch
+torchvision
+faiss-cpu
+matplotlib
+julia
+pyarrow
+einops

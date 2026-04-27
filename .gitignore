@@ -1,7 +1,6 @@
 __pycache__
 
 *.jpc
-*.txt
 *.pyc
 *.npz
 *.npy
