@@ -17,10 +17,10 @@ sys.path.append("./src")
 sys.path.append("./")
 
 
-from vqvae2_config import VQVAE2Config
-from vqvae2_scheduler import CycleScheduler
-from ProgressBar import ProgressBar
-from imagenet_loader import get_imagenet_dataloader
+from src.vqvae2.vqvae2_config import VQVAE2Config
+from src.vqvae2.vqvae2_scheduler import CycleScheduler
+from src.utils.ProgressBar import ProgressBar
+from src.utils.imagenet_loader import get_imagenet_dataloader
 import numpy as np
 
 # from julia import Main as JL
