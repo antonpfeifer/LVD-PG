@@ -27,5 +27,4 @@ python3 -m venv .venv
 
 # activate virtual environment and install dependencies
 source .venv/bin/activate
-cd LVD-PG
 pip install -r requirements.txt
