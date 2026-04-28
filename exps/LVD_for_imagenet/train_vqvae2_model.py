@@ -25,8 +25,8 @@ sys.path.append("./")
 
 from vqvae2_scheduler import CycleScheduler
 from vqvae2_config import VQVAE2Config
-from ProgressBar import ProgressBar
-from imagenet_loader import get_imagenet_dataloader
+from src.utils.ProgressBar import ProgressBar
+from src.utils.imagenet_loader import get_imagenet_dataloader
 from torch.utils.data import TensorDataset, DataLoader, Dataset
 
 
