@@ -36,6 +36,9 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
 
     # Perform global KMeans clustering
     cls_file_name = "temp/temp_$(dataset)/global_indep_cls/clusters_$(num_independent_clusters)_$(note).npz"
+    if !isdir("temp/temp_$(dataset)/global_indep_cls")
+        mkpath("temp/temp_$(dataset)/global_indep_cls")
+    end
     if !isfile(cls_file_name)
         print("> Global clustering into $(num_independent_clusters) clusters... ")
         t = @elapsed begin
@@ -58,7 +61,9 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
 
     task_identifier = "$(note)_id$(num_independent_clusters)_init$(Dict(kwargs...)[:num_init_clusters])_final$(Dict(kwargs...)[:num_final_clusters])"
     ll_file_name = "temp/temp_$(dataset)/logs/$(task_identifier)_parallel.log"
-
+    if !isdir("temp/temp_$(dataset)/logs")
+        mkpath("temp/temp_$(dataset)/logs")
+    end
     total_trn_bpd = 0.0
     total_val_bpd = 0.0
     for cid = start_cid : end_cid
@@ -117,16 +122,16 @@ function progressive_growing(
     val_data_gpu = cu(val_data)
 
     if !isdir("temp/temp_$(dataset)/init_pcs/$(task_identifier)")
-        mkdir("temp/temp_$(dataset)/init_pcs/$(task_identifier)")
+        mkpath("temp/temp_$(dataset)/init_pcs/$(task_identifier)")
     end
 
     if !isdir("temp/temp_$(dataset)/final_pcs/$(task_identifier)")
-        mkdir("temp/temp_$(dataset)/final_pcs/$(task_identifier)")
+        mkpath("temp/temp_$(dataset)/final_pcs/$(task_identifier)")
     end
 
 
     if !isdir("temp/temp_$(dataset)/logs/$(task_identifier)")
-        mkdir("temp/temp_$(dataset)/logs/$(task_identifier)")
+        mkpath("temp/temp_$(dataset)/logs/$(task_identifier)")
     end
 
     grow_ll_file_name = "temp/temp_$(dataset)/logs/$(task_identifier)/$(global_task_id).log"
@@ -143,11 +148,11 @@ function progressive_growing(
     # Generate initial structure
     base_dir = "temp/temp_$(dataset)/init_pcs/$(task_identifier)/$(global_task_id)"
     if !isdir(base_dir)
-        mkdir(base_dir)
+        mkpath(base_dir)
     end
     base_dir1 = "temp/temp_$(dataset)/final_pcs/$(task_identifier)/$(global_task_id)"
     if !isdir(base_dir1)
-        mkdir(base_dir1)
+        mkpath(base_dir1)
     end
     init_pc_fname = joinpath(base_dir, "init_pc_$(num_init_clusters).jpc")
     # final_pc_fname = joinpath(base_dir1, "final_pc_$(num_final_clusters).jpc")
