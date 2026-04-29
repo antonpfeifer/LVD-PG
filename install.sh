@@ -15,16 +15,21 @@ else
     echo "Julia is already installed."
 fi
 
-# install julia dependencies discovered from Julia source imports
-julia --project=. -e 'using Pkg; Pkg.instantiate()'
+
 
 
 # ensure that python 3 is used
 python3 --version
 
 # create virtual environment
-python3 -m venv .venv
+conda create --file environment.yml
 
 # activate virtual environment and install dependencies
-source .venv/bin/activate
-pip install -r requirements.txt
+conda activate lvd-pg
+
+# install julia dependencies discovered from Julia source imports
+julia --project=. -e 'using Pkg; Pkg.instantiate(); ENV["PYTHON"] = "/home/anton/miniconda3/envs/lvd-pg/bin/python"; Pkg.build("PyCall")'
+
+mkdir -p exps/progressive_growing/data/data_imagenet32
+touch exps/progressive_growing/data/data_imagenet32/data_trn.npy
+touch exps/progressive_growing/data/data_imagenet32/data_val.npy

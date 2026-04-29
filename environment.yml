@@ -1,0 +1,14 @@
+name: lvd-pg
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - scikit-learn
+  - pytorch
+  - torchvision
+  - faiss-gpu
+  - matplotlib
+  - julia
+  - pyarrow
+  - einops
