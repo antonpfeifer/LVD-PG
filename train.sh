@@ -4,7 +4,7 @@ data_path="/Users/anton/Documents/development/lvd-pg/data"
 cd exps/LVD_for_imagenet/
 python3 train_vqvae2_model.py -id --data-path "$data_path"
 #get LVD augmented dataset
-python3 get_data_for_PG.py -id --data-path "$data_path"
+python3 get_data_for_PG.py -id --data-path "$data_path" --num-tr-samples 60000 --num-ts-samples 10000
 #train cluster-conditioned PCs with progressive growing
 cd ../progressive_growing/
 bash pg.sh "imagenet32"
