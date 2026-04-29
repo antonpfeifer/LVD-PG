@@ -22,7 +22,7 @@ struct InnerRegionNode <: RegionGraph
     scope::BitSet
     children::AbstractVector{T} where T <: RegionGraph
     InnerRegionNode(nid::Int, children::AbstractVector{T}) where T <: RegionGraph = begin
-        s = deepcopy(children[1].scope)
+        s = Base.deepcopy(children[1].scope)
         for ch in children[2:end]
             @assert s == ch.scope
         end
