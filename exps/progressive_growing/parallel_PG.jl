@@ -165,7 +165,8 @@ function progressive_growing(
         datasets = []
         for cid = 1 : num_init_clusters
             dataset = trn_data[trn_cls_ids .== cid, :]
-            push!(datasets, dataset)
+            # Convert to CPU Array explicitly just in case to avoid passing mixed arrays
+            push!(datasets, Array(dataset))
         end
         pcs = joined_hclt(datasets, num_latents; num_cats = 256, input_type = Categorical)
         pcs = pcs[1:num_init_clusters]
