@@ -15,6 +15,7 @@ sys.path.append("../../src/vqvae2")
 sys.path.append("../../src/utils")
 sys.path.append("./src")
 sys.path.append("./")
+sys.path.append("../")
 
 
 from src.vqvae2.vqvae2_config import VQVAE2Config
@@ -77,8 +78,9 @@ def get_vqvae2_model(args):
 
 def get_data_for_vqclusters(args,model,device,data_loader,num_samples,split):
     s = args.imagenet_size // args.patch_size
+    print(f"> Getting data for vqclusters with patch size {args.patch_size} and {num_samples} samples ... <\n")
     yz_feats = torch.zeros([num_samples,s,s,args.embed_size])
-    all_imgs = torch.zeros([num_samples,3,args.imagenet_size,args.imagenet_size]) 
+    all_imgs = torch.zeros([num_samples,3,args.imagenet_size,args.imagenet_size], dtype=torch.uint8) 
 
     print("> sampling data ... <\n")
 
@@ -87,8 +89,11 @@ def get_data_for_vqclusters(args,model,device,data_loader,num_samples,split):
         s_idx = 0
         for imgs, _ in data_loader:
             e_idx = s_idx + imgs.size(0)
+            
+            # Save original imgs as uint8 before casting
+            all_imgs[s_idx:e_idx,:,:] = imgs.detach().cpu().to(torch.uint8)
+            
             imgs = imgs.float().to(device)
-            all_imgs[s_idx:e_idx,:,:] = imgs.detach().cpu()
             quant = model.get_continous_features(imgs / 255.0)
             yz_feats[s_idx:e_idx,:,:] = quant.detach().permute(0,2,3,1).cpu()
             s_idx = e_idx
@@ -144,11 +149,13 @@ def main():
     model, device = get_vqvae2_model(args)
     ckpt = torch.load(args.model_save_path, map_location = torch.device('cpu'))
     model.load_state_dict(ckpt["model"])
+    print("> Model loaded")
 
 
     #Get progressive growing dataset
     get_data_for_vqclusters(args,model,device,train_loader,args.num_tr_samples,split='trn')
     get_data_for_vqclusters(args,model,device,test_loader,args.num_ts_samples,split='val')
+    print("> Data for progressive growing saved")
 
 
 if __name__ == "__main__":
