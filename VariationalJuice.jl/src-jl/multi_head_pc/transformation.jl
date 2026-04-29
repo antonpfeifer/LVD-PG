@@ -84,7 +84,7 @@ function perturb(n::PlainInputNode; sigma::AbstractFloat)
 end
 
 function perturb(params::Vector{Float32}; sigma::AbstractFloat)
-    params = deepcopy(params)
+    params = Base.deepcopy(params)
     params .+= log.(clamp.(rand(Normal(1.0, sigma), length(params)), 0.1, 10.0))
     params .-= StatsFuns.logsumexp(params)
 
