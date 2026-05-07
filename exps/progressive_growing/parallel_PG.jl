@@ -47,6 +47,7 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
             val_cls_ids = py"pred_kmeans_clusters"(centroids, yz_val_features)
         end
         println(@sprintf("done (%.2fs)", t))
+        GC.gc()
 
         NPZ.npzwrite(cls_file_name, Dict("trn_cls_ids" => trn_cls_ids, "val_cls_ids" => val_cls_ids))
     else
@@ -144,6 +145,7 @@ function progressive_growing(
         val_cls_ids = py"pred_kmeans_clusters"(centroids, val_features)
     end
     # println(@sprintf("done (%.2fs)", t))
+    GC.gc()
 
     # Generate initial structure
     base_dir = "temp/temp_$(dataset)/init_pcs/$(task_identifier)/$(global_task_id)"
@@ -414,6 +416,7 @@ function progressive_growing(
         end
         cls_ids_trn = py"pred_kmeans_clusters"(centroids, trn_features[trn_filter,:])
         cls_ids_val = py"pred_kmeans_clusters"(centroids, val_features[val_filter,:])
+        GC.gc()
         for j = 1 : target_n_clusters
             if j <= length(grow_cls_true)
                 @views trn_cls_ids[trn_filter][cls_ids_trn .== j] .= grow_cls_true[j]
