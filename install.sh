@@ -15,8 +15,11 @@ else
     echo "Julia is already installed."
 fi
 
-
-
+# ensure that conda is installed
+if ! command -v conda &> /dev/null
+then
+    echo "Conda could not be found, please install Conda first."
+    exit 1
 
 # ensure that python 3 is used
 python3 --version
@@ -26,6 +29,9 @@ conda env create --file environment.yml
 
 # activate virtual environment and install dependencies
 conda activate lvd-pg
+
+# install pycall dependencies
+python -c "import julia; julia.install()"
 
 # install julia dependencies discovered from Julia source imports
 julia --project=. -e 'using Pkg; Pkg.instantiate(); ENV["PYTHON"] = "/home/anton/miniconda3/envs/lvd-pg/bin/python"; Pkg.build("PyCall")'
