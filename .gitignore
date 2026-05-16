@@ -19,3 +19,5 @@ __pycache__
 .env
 
 /data/**
+*res.txt
+exps/progressive_growing/pg_logs_*.sh
