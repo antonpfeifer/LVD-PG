@@ -13,8 +13,7 @@ cd ../progressive_growing/
 bash pg.sh "imagenet32"
 #finetune PCs
 cd ../LVD_for_imagenet/
-python-jl progressive_growing_top.py -id --data-path "$DATA_PATH"
-
+LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$LD_LIBRARY_PATH python-jl progressive_growing_top.py -id --data-path "$DATA_PATH" --num-tr-samples 6000 --num-ts-samples 1000 --batch-size 16
 
 #specify the data path
 # data_path=""

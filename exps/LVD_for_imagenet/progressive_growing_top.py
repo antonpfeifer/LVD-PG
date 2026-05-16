@@ -127,6 +127,8 @@ def main():
     print("Number of CLT edges:", len(clt_edges))
     print("CLT edges:", clt_edges)
 
+    del model
+    torch.cuda.empty_cache()
 
     JL.training_pg_top_level_pcs(args.imagenet_size, args.fname_idx, args.patch_size, patch_idxs, clt_edges, train_loader, test_loader, args.num_independent_clusters, args.num_init_clusters, args.num_final_clusters, top_level_hclt_params)
 

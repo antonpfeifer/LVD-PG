@@ -73,52 +73,47 @@ function training_pg_top_level_pcs(image_size, fname_idx, patch_size, patch_idxs
     println("======== generating pseudo dataset for the top_level_pc")
     num_patches = length(patch_idxs)
     patch_hw = 8
+    
+    # Pre-scan clusters to discover n_clusters_y and valid files
     n_clusters_y = 0
+    valid_clusters = []
+    for cluster_id = 1 : num_independent_clusters
+        base_dir1 = joinpath(base_dir,"final_pcs/$(task_identifier)/$(cluster_id)")
+        final_pc_fname = joinpath(base_dir1, "final_pc_$(fname_idx).jpc")
+        if !isfile(final_pc_fname)
+            println("Warning: file $(final_pc_fname) not found. Skipping cluster $(cluster_id).")
+            continue
+        end
+        pc = read_mhpc(final_pc_fname)
+        push!(valid_clusters, (cluster_id, length(pc), final_pc_fname))
+        n_clusters_y += length(pc)
+    end
+    
+    println("> Total number of low-level PG clusters: $(n_clusters_y) <")
 
+    patch_level_tr_data = zeros(Float32, size(subsampled_tr_data, 1), num_patches, n_clusters_y)
+    patch_level_ts_data = zeros(Float32, size(subsampled_ts_data, 1), num_patches, n_clusters_y)
 
-    patch_level_tr_data = []
-    patch_level_ts_data = []
-    n_clusters_y = 0
     for (idx, patch_idx) in enumerate(patch_idxs)
         patch_tuple = to_patch_tuple(patch_idx, patch_hw)
         x_s, x_e = (patch_tuple[1] - 1) * patch_size + 1, patch_tuple[1] * patch_size
         y_s, y_e = (patch_tuple[2] - 1) * patch_size + 1, patch_tuple[2] * patch_size
-        patch_tr_lls = []
-        patch_ts_lls = []
-        for cluster_id = 1 : num_independent_clusters
-            base_dir1 = joinpath(base_dir,"final_pcs/$(task_identifier)/$(cluster_id)")
-            final_pc_fname = joinpath(base_dir1, "final_pc_$(fname_idx).jpc")
+        
+        current_y_offset = 1
+        for (cluster_id, num_clusters, final_pc_fname) in valid_clusters
             pc = read_mhpc(final_pc_fname)
-
-            num_clusters = length(pc)
-            if idx == 1
-                n_clusters_y += num_clusters
-            end
             mhbpc = CuMultiHeadBitsProbCircuit(pc)
-            tr_lls = zeros(Float32, size(subsampled_tr_data, 1), 1, num_clusters)
-            ts_lls = zeros(Float32, size(subsampled_ts_data, 1), 1, num_clusters)
-            tr_lls[:,1,:] .= Array(loglikelihoods(mhbpc, reshape(subsampled_tr_data[:,:,x_s:x_e,y_s:y_e],(:,3*(patch_size^2))), nothing; batch_size = 256))
-            ts_lls[:,1,:] .= Array(loglikelihoods(mhbpc, reshape(subsampled_ts_data[:,:,x_s:x_e,y_s:y_e],(:,3*(patch_size^2))), nothing; batch_size = 256))
-            if cluster_id == 1
-                patch_tr_lls = tr_lls
-                patch_ts_lls = ts_lls
-            else
-                patch_tr_lls = cat(patch_tr_lls,tr_lls,dims=3)
-                patch_ts_lls = cat(patch_ts_lls,ts_lls,dims=3)
-                if idx == 1
-                    @assert size(patch_tr_lls,3) == n_clusters_y
-                end
-            end
+            
+            patch_level_tr_data[:, idx, current_y_offset : current_y_offset+num_clusters-1] .= 
+                Array(loglikelihoods(mhbpc, reshape(subsampled_tr_data[:,:,x_s:x_e,y_s:y_e],(:,3*(patch_size^2))), nothing; batch_size = 256))
+                
+            patch_level_ts_data[:, idx, current_y_offset : current_y_offset+num_clusters-1] .= 
+                Array(loglikelihoods(mhbpc, reshape(subsampled_ts_data[:,:,x_s:x_e,y_s:y_e],(:,3*(patch_size^2))), nothing; batch_size = 256))
+                
+            current_y_offset += num_clusters
         end
 
-        if idx == 1
-            patch_level_tr_data = patch_tr_lls
-            patch_level_ts_data = patch_ts_lls
-        else
-            patch_level_tr_data = cat(patch_level_tr_data,patch_tr_lls,dims=2)
-            patch_level_ts_data = cat(patch_level_ts_data,patch_ts_lls,dims=2)
-        end
-        @assert size(patch_level_tr_data,2) == idx
+        GC.gc()
 
         for cluster_id1 = 1 : n_clusters_y
             min_bpd = -maximum(patch_level_tr_data[:,idx,cluster_id1]) / log(2.0) / 3 / patch_size^2
@@ -133,9 +128,8 @@ function training_pg_top_level_pcs(image_size, fname_idx, patch_size, patch_idxs
         
     CUDA.unsafe_free!(subsampled_tr_data)
     CUDA.unsafe_free!(subsampled_ts_data)
-
-
-    
+    GC.gc(true)
+    CUDA.reclaim()
 
     println("> Total number of low-level PG clusters: $(n_clusters_y) <")
 
@@ -160,7 +154,7 @@ function training_pg_top_level_pcs(image_size, fname_idx, patch_size, patch_idxs
     end
 
     print("> Constructing top-level PC...")
-    t = @elapsed top_level_pc = customized_hclt(clt_edges, n_clusters_y; get_leaf_pcs, get_edge_params, parameterize_leaf_edge = true)
+    t = @elapsed top_level_pc = customized_hclt_p2(clt_edges, n_clusters_y, 64; get_leaf_pcs, get_edge_params, parameterize_leaf_edge = true)
     init_parameters(top_level_pc; perturbation=0.4)
     @printf(" done (%.2fs)\n", t)
 
