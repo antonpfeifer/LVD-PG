@@ -2,9 +2,13 @@ from distutils.command.config import config
 import torch
 from torch import nn
 from torch.nn import functional as F
-from utils import *
 from einops import rearrange
 import numpy as np
+import sys
+
+sys.path.append("../../src/utils")
+
+from src.utils import *
 
 # Copyright 2018 The Sonnet Authors. All Rights Reserved.
 #
