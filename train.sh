@@ -1,3 +1,8 @@
+#source the environment variables
+set -a
+source .env
+set +a
+
 #train teacher DGM
 cd exps/LVD_for_imagenet/
 python3 train_vqvae2_model.py -id --data-path "$DATA_PATH"
