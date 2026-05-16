@@ -24,9 +24,9 @@ function get_ancestors(g::MetaDiGraph)
         
         for out_neighbor in out_neighbors
             if haskey(ancestors, out_neighbor)
-                union!(ancestors[out_neighbor], deepcopy(ancestors[node_idx]))
+                union!(ancestors[out_neighbor], Base.deepcopy(ancestors[node_idx]))
             else
-                ancestors[out_neighbor] = deepcopy(ancestors[node_idx])
+                ancestors[out_neighbor] = Base.deepcopy(ancestors[node_idx])
             end
             push!(ancestors[out_neighbor], out_neighbor)
             push!(edges, (node_idx, out_neighbor))
