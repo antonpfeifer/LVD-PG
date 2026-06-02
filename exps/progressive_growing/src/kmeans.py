@@ -4,6 +4,7 @@ import os
 
 
 def train_kmeans_model(train_features, n_clusters, gpu_id = 0, centroids = None):
+    print("Num GPUs detected by faiss:", faiss.get_num_gpus())
     train_features = np.ascontiguousarray(train_features)
     kmeans = faiss.Clustering(train_features.shape[1], n_clusters)
     if centroids is not None:
@@ -12,14 +13,20 @@ def train_kmeans_model(train_features, n_clusters, gpu_id = 0, centroids = None)
     kmeans.verbose = False
     kmeans.niter = 200
     kmeans.nredo = 5
-    cfg = faiss.GpuIndexFlatConfig()
-    cfg.useFloat16 = False
-    cfg.device = gpu_id
-    index = faiss.GpuIndexFlatL2(
-        faiss.StandardGpuResources(),
-        train_features.shape[1],
-        cfg
-    )
+    
+    try:
+        cfg = faiss.GpuIndexFlatConfig()
+        cfg.useFloat16 = False
+        cfg.device = gpu_id
+        index = faiss.GpuIndexFlatL2(
+            faiss.StandardGpuResources(),
+            train_features.shape[1],
+            cfg
+        )
+    except Exception as e:
+        print(f"GPU Index failed: {e}. Falling back to CPU.")
+        index = faiss.IndexFlatL2(train_features.shape[1])
+        
     kmeans.train(train_features, index)
     centroids = faiss.vector_float_to_array(kmeans.centroids).reshape(n_clusters, train_features.shape[1])
 

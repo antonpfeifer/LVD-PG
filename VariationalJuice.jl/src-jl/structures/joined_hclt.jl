@@ -73,9 +73,9 @@ function joined_hclt(datasets::Vector, num_hidden_cats; num_cats = nothing, shap
     for (i, data) in enumerate(datasets)
         print(@sprintf("  - CLT #%03d/%03d... ", i, length(datasets)))
         t = @elapsed begin
-            if data isa Array
-                data = cu(data)
-            end
+            # if data isa Array
+            #     data = cu(data)
+            # end
             clt_edges = learn_chow_liu_tree(data; pseudocount = pseudocount, Float = Float32)
             clt = PCs.clt_edges2graphs(clt_edges; shape)
             push!(clts, clt)

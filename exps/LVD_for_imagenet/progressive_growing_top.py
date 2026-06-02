@@ -19,9 +19,9 @@ sys.path.append("./src")
 sys.path.append("./")
 
 
-from vqvae2_scheduler import CycleScheduler
-from vqvae2_config import VQVAE2Config
-from imagenet_loader import get_imagenet_dataloader
+from src.vqvae2.vqvae2_scheduler import CycleScheduler
+from src.vqvae2.vqvae2_config import VQVAE2Config
+from src.utils.imagenet_loader import get_imagenet_dataloader
 
 
 
