@@ -4,6 +4,7 @@ from torch import nn
 from torch.nn import functional as F
 from utils import *
 from einops import rearrange
+import numpy as np
 
 # Copyright 2018 The Sonnet Authors. All Rights Reserved.
 #
