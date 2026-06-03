@@ -22,7 +22,7 @@ fi
 python3 --version
 
 # create virtual environment
-conda create --file environment.yml
+conda env create --file environment.yml
 
 # activate virtual environment and install dependencies
 conda activate lvd-pg
