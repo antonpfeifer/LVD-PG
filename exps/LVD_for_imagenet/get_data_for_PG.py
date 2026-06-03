@@ -10,12 +10,17 @@ import warnings
 import torch.optim as optim
 from torch.utils.data import Dataset
 
+from vqvae2_p4 import VQVAE2
+import vqvae2_p4
+import vqvae2_p8
+
 sys.path.append("../../src/pixelcnn")
 sys.path.append("../../src/vqvae2")
 sys.path.append("../../src/utils")
 sys.path.append("./src")
 sys.path.append("./")
 sys.path.append("../")
+sys.path.append("../../src/vqvae2")
 
 
 from src.vqvae2.vqvae2_config import VQVAE2Config
@@ -66,7 +71,7 @@ def get_vqvae2_model(args):
     vq_config.independent_decoder = args.independent_decoder
     vq_config.ll_ratio = args.ll_ratio
 
-    device = torch.device(f"cuda:{args.gpu}" if args.gpu >= 0 else "cpu")
+    device: torch.device = torch.device(f"cuda:{args.gpu}" if args.gpu >= 0 else "cpu")
 
     model = VQVAE2(vq_config)
     model.to(device)
@@ -76,7 +81,7 @@ def get_vqvae2_model(args):
 
 
 
-def get_data_for_vqclusters(args,model,device,data_loader,num_samples,split):
+def get_data_for_vqclusters(args,model: vqvae2_p4.VQVAE2 | vqvae2_p8.VQVAE2,device: torch.device,data_loader: torch.utils.data.DataLoader,num_samples: int,split: str):
     s = args.imagenet_size // args.patch_size
     print(f"> Getting data for vqclusters with patch size {args.patch_size} and {num_samples} samples ... <\n")
     yz_feats = torch.zeros([num_samples,s,s,args.embed_size])
@@ -128,7 +133,7 @@ def main():
 
 
 
-    args = parser.parse_args()
+    args: argparse.Namespace = parser.parse_args()
 
     # Task identifier
     args.log_path = f"../../train_logs/imgnet{args.imagenet_size}_logs/p{args.patch_size}_c{args.n_clusters}_r{args.ll_ratio}_id-{args.independent_decoder}_metric-ll"
