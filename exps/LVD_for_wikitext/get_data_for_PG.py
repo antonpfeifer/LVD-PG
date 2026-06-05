@@ -73,8 +73,8 @@ def get_data_for_vqclusters(args, model, data_loader: torch.utils.data.DataLoade
 
                 for i in range(chunk.size(0)):
                     suffix = chunk[i:].unsqueeze(0)
-                    quant = model(input_ids=suffix).last_hidden_state[0, 0]
-                    feats: Float[torch.Tensor, "embed_size"] = quant.detach().cpu()
+                    quant: Float[torch.Tensor, "embed_size"] = model(input_ids=suffix).last_hidden_state.mean(dim=1).squeeze(0)  # type: ignore
+                    feats = quant.detach().cpu()
 
                     all_chunks[sample_idx] = chunk_cpu[i].item()
                     yz_feats[sample_idx, :] = feats.numpy()
