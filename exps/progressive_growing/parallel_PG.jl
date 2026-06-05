@@ -29,10 +29,10 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
     yz_trn_features = np.load("data/data_$(dataset)/idfeat_trn.npy")
     yz_val_features = np.load("data/data_$(dataset)/idfeat_val.npy")
 
-
-    trn_data = reshape(rgb2ycrcb(trn_data), (size(trn_data, 1), :))
-    val_data = reshape(rgb2ycrcb(val_data), (size(val_data, 1), :))
-
+    if dataset == "imagenet32" || dataset == "imagenet64"
+         trn_data = reshape(rgb2ycrcb(trn_data), (size(trn_data, 1), :))
+         val_data = reshape(rgb2ycrcb(val_data), (size(val_data, 1), :))
+    end
 
     # Perform global KMeans clustering
     cls_file_name = "temp/temp_$(dataset)/global_indep_cls/clusters_$(num_independent_clusters)_$(note).npz"
