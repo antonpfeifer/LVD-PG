@@ -1,6 +1,7 @@
 import torch
-from torch.utils.data import Dataset, DataLoader, IterableDataset
-from datasets import load_dataset, Dataset as hf_dataset
+from datasets import Dataset as hf_dataset
+from datasets import load_dataset
+from torch.utils.data import DataLoader, Dataset, IterableDataset
 from transformers import AutoTokenizer
 
 
@@ -24,22 +25,42 @@ def get_tokenized_ids(
     tokenizer_name: str = "answerdotai/ModernBERT-base",
     max_rows: int | None = None,
 ) -> list[int]:
+    dataset: hf_dataset = None
+
     if max_rows is not None:
-        dataset: hf_dataset = load_dataset(dataset_name, '20231101.en', split=f"{split}[:{max_rows}]")
+        dataset = load_dataset(
+            dataset_name, "20231101.en", split=f"{split}[:{max_rows}]"
+        )
     else:
-        dataset: hf_dataset = load_dataset(dataset_name, '20231101.en', split=split)
+        dataset = load_dataset(dataset_name, "20231101.en", split=split)
+
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
 
     all_ids: list[int] = []
     for example in dataset:
-        ids = tokenizer.encode(example["text"], add_special_tokens=False, verbose=False) # type: ignore
+        ids = tokenizer.encode(example["text"], add_special_tokens=False, verbose=False)  # type: ignore
         all_ids.extend(ids)
 
     return all_ids
 
 
-def get_hf_dataloader(dataset_name="wikimedia/wikipedia", batch_size=8, shuffle_train=True, shuffle_test=False, chunk_size=32, tokenizer_name="answerdotai/ModernBERT-base", max_rows=None, train_split_ratio=0.8, max_chunks=None):
-    all_ids = get_tokenized_ids(dataset_name=dataset_name, split="train", tokenizer_name=tokenizer_name, max_rows=max_rows)
+def get_hf_dataloader(
+    dataset_name="wikimedia/wikipedia",
+    batch_size=8,
+    shuffle_train=True,
+    shuffle_test=False,
+    chunk_size=32,
+    tokenizer_name="answerdotai/ModernBERT-base",
+    max_rows=None,
+    train_split_ratio=0.8,
+    max_chunks=None,
+):
+    all_ids = get_tokenized_ids(
+        dataset_name=dataset_name,
+        split="train",
+        tokenizer_name=tokenizer_name,
+        max_rows=max_rows,
+    )
 
     n_chunks = len(all_ids) // chunk_size
     if max_chunks is not None:
@@ -54,7 +75,9 @@ def get_hf_dataloader(dataset_name="wikimedia/wikipedia", batch_size=8, shuffle_
     train_dataset = TokenizedChunkDataset(train_ids, chunk_size=chunk_size)
     test_dataset = TokenizedChunkDataset(test_ids, chunk_size=chunk_size)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=shuffle_train)
+    train_loader = DataLoader(
+        train_dataset, batch_size=batch_size, shuffle=shuffle_train
+    )
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=shuffle_test)
 
     return train_loader, test_loader

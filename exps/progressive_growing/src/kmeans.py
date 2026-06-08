@@ -1,34 +1,38 @@
-import numpy as np
-import faiss
 import os
 
+import faiss
+import numpy as np
 
-def train_kmeans_model(train_features, n_clusters, gpu_id = 0, centroids = None):
+
+def train_kmeans_model(train_features, n_clusters, gpu_id=0, centroids=None):
     print("Num GPUs detected by faiss:", faiss.get_num_gpus())
+    print("Features shape:", train_features.shape)
     train_features = np.ascontiguousarray(train_features)
     kmeans = faiss.Clustering(train_features.shape[1], n_clusters)
     if centroids is not None:
         faiss.copy_array_to_vector(
-            np.ascontiguousarray(np.array(centroids).astype(np.float32).reshape(-1)), kmeans.centroids)
+            np.ascontiguousarray(np.array(centroids).astype(np.float32).reshape(-1)),
+            kmeans.centroids,
+        )
     kmeans.verbose = False
     kmeans.niter = 200
     kmeans.nredo = 5
-    
+
     try:
         cfg = faiss.GpuIndexFlatConfig()
         cfg.useFloat16 = False
         cfg.device = gpu_id
         index = faiss.GpuIndexFlatL2(
-            faiss.StandardGpuResources(),
-            train_features.shape[1],
-            cfg
+            faiss.StandardGpuResources(), train_features.shape[1], cfg
         )
     except Exception as e:
         print(f"GPU Index failed: {e}. Falling back to CPU.")
         index = faiss.IndexFlatL2(train_features.shape[1])
-        
+
     kmeans.train(train_features, index)
-    centroids = faiss.vector_float_to_array(kmeans.centroids).reshape(n_clusters, train_features.shape[1])
+    centroids = faiss.vector_float_to_array(kmeans.centroids).reshape(
+        n_clusters, train_features.shape[1]
+    )
 
     return centroids.tolist()
 
@@ -46,4 +50,6 @@ def pred_kmeans_clusters(centroids, features):
 
 def save_kmeans_model(centroids, model_path):
     file_name = os.path.join(model_path, "centroids.npz")
-    np.savez(file_name, centroids = centroids)
+    np.savez(file_name, centroids=centroids)
+    np.savez(file_name, centroids=centroids)
+    np.savez(file_name, centroids=centroids)
