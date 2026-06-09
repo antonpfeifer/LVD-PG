@@ -45,11 +45,20 @@ def get_data_for_vqclusters(
     embed_size = args.embed_size
     batch_count = len(data_loader)
 
-    features = torch.zeros([num_samples, chunk_size, embed_size])
-    tokens = torch.zeros([num_samples, chunk_size], dtype=torch.long)
-
     data_dir = args.output_dir
     os.makedirs(data_dir, exist_ok=True)
+    tokens = np.lib.format.open_memmap(
+        os.path.join(data_dir, f"data_{split}.npy"),
+        mode="w+",
+        dtype=np.int32,
+        shape=(num_samples, chunk_size),
+    )
+    features = np.lib.format.open_memmap(
+        os.path.join(data_dir, f"idfeat_{split}.npy"),
+        mode="w+",
+        dtype=np.float32,
+        shape=(num_samples, chunk_size, embed_size),
+    )
 
     with torch.no_grad():
         model.eval()
@@ -60,6 +69,12 @@ def get_data_for_vqclusters(
         )
 
         for batch_index, chunk_batch in enumerate(data_loader, start=0):
+            remaining = num_samples - chunk_count
+            if remaining <= 0:
+                break
+            if chunk_batch.shape[0] > remaining:
+                chunk_batch = chunk_batch[:remaining]
+
             chunk_batch_cpu: Int[torch.Tensor, "batch_size chunk_size"] = (
                 chunk_batch.detach().cpu()
             )
@@ -71,18 +86,28 @@ def get_data_for_vqclusters(
                 model(input_ids=chunk_batch_gpu).last_hidden_state
             )
 
-            for chunk_index in range(chunk_batch_cpu.shape[0]):
-                out_index = chunk_count + chunk_index
-                # iterate over all tokens in the chunk
-                for token_index in range(chunk_size):
-                    suffix_features = batch_features[chunk_index, token_index:, :]
-                    suffix_feature = suffix_features.mean(0)
-                    features[out_index, token_index, :] = suffix_feature.detach().cpu()
-                    tokens[out_index, token_index] = chunk_batch_cpu[
-                        chunk_index, token_index
-                    ]
+            batch_size = chunk_batch_cpu.shape[0]
+            next_chunk_count = chunk_count + batch_size
+            suffix_sums = torch.flip(
+                torch.cumsum(torch.flip(batch_features, dims=[1]), dim=1), dims=[1]
+            )
+            suffix_lengths = torch.arange(
+                chunk_size,
+                0,
+                -1,
+                device=batch_features.device,
+                dtype=batch_features.dtype,
+            ).view(1, chunk_size, 1)
+            suffix_features = suffix_sums / suffix_lengths
 
-            chunk_count += chunk_batch_cpu.shape[0]
+            tokens[chunk_count:next_chunk_count] = chunk_batch_cpu.numpy().astype(
+                np.int32, copy=False
+            )
+            features[chunk_count:next_chunk_count] = (
+                suffix_features.detach().cpu().numpy().astype(np.float32, copy=False)
+            )
+
+            chunk_count = next_chunk_count
 
             print(
                 f"{split}: batch {batch_index + 1}/{len(data_loader)} saved chunks through {chunk_count}",
@@ -92,12 +117,8 @@ def get_data_for_vqclusters(
         if chunk_count != num_samples:
             raise ValueError(f"Expected {num_samples} chunks, wrote {chunk_count}")
 
-        data_dir = args.output_dir
-        np.save(data_dir + f"/data_{split}.npy", tokens.numpy().astype(np.int32))
-        np.save(
-            data_dir + f"/idfeat_{split}.npy",
-            features.numpy().astype(np.float32),
-        )
+        tokens.flush()
+        features.flush()
 
 
 def main():
