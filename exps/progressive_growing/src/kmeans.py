@@ -4,10 +4,8 @@ import faiss
 import numpy as np
 
 
-def train_kmeans_model(train_features, n_clusters, gpu_id=0, centroids=None):
-    print("Num GPUs detected by faiss:", faiss.get_num_gpus())
-    print("Features shape:", train_features.shape)
-    train_features = np.ascontiguousarray(train_features)
+def _train_2d_kmeans(train_features, n_clusters, gpu_id=0, centroids=None):
+    train_features = np.ascontiguousarray(train_features.astype(np.float32))
     kmeans = faiss.Clustering(train_features.shape[1], n_clusters)
     if centroids is not None:
         faiss.copy_array_to_vector(
@@ -30,16 +28,46 @@ def train_kmeans_model(train_features, n_clusters, gpu_id=0, centroids=None):
         index = faiss.IndexFlatL2(train_features.shape[1])
 
     kmeans.train(train_features, index)
-    centroids = faiss.vector_float_to_array(kmeans.centroids).reshape(
+    return faiss.vector_float_to_array(kmeans.centroids).reshape(
         n_clusters, train_features.shape[1]
     )
 
-    return centroids.tolist()
+
+def train_kmeans_model(train_features, n_clusters, gpu_id=0, centroids=None):
+    print("Num GPUs detected by faiss:", faiss.get_num_gpus())
+    print("Features shape:", train_features.shape)
+    train_features = np.asarray(train_features)
+
+    if train_features.ndim == 3:
+        position_centroids = []
+        for pos in range(train_features.shape[1]):
+            pos_centroids = None if centroids is None else np.asarray(centroids)[pos]
+            position_centroids.append(
+                _train_2d_kmeans(train_features[:, pos, :], n_clusters, gpu_id, pos_centroids)
+            )
+        return np.stack(position_centroids, axis=0).tolist()
+
+    return _train_2d_kmeans(train_features, n_clusters, gpu_id, centroids).tolist()
 
 
 def pred_kmeans_clusters(centroids, features):
-    features = np.ascontiguousarray(features.astype(np.float32))
-    centroids = np.ascontiguousarray(np.array(centroids).astype(np.float32))
+    features = np.asarray(features).astype(np.float32)
+    centroids = np.asarray(centroids).astype(np.float32)
+
+    if features.ndim == 3:
+        labels_by_position = np.empty(features.shape[:2], dtype=np.int64)
+        n_clusters = centroids.shape[1]
+        for pos in range(features.shape[1]):
+            pos_features = np.ascontiguousarray(features[:, pos, :])
+            pos_centroids = np.ascontiguousarray(centroids[pos])
+            index = faiss.IndexFlatL2(pos_centroids.shape[1])
+            index.add(pos_centroids)
+            _, labels = index.search(pos_features, 1)
+            labels_by_position[:, pos] = labels.ravel() + pos * n_clusters
+        return (labels_by_position.ravel() + 1).tolist()
+
+    features = np.ascontiguousarray(features)
+    centroids = np.ascontiguousarray(centroids)
     index = faiss.IndexFlatL2(centroids.shape[1])
     index.add(centroids)
     _, labels = index.search(features, 1)
