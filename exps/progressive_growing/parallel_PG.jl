@@ -22,7 +22,7 @@ function rgb2ycrcb(imgs)
     new_imgs
 end
 
-function categorical_emission_pcs(datasets, num_latents; num_cats = parse(Int, get(ENV, "WIKITEXT_VOCAB_SIZE", "50368")))
+function categorical_emission_pcs(datasets, num_latents; num_cats = 50368)
     num_vars = size(datasets[1], 2)
     map(datasets) do _
         components = map(1:num_latents) do _
@@ -82,7 +82,7 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
 
 
 
-    task_identifier = "$(note)$(positionwise_clustering ? "_poswise" : "")_id$(num_independent_clusters)_init$(Dict(kwargs...)[:num_init_clusters])_final$(Dict(kwargs...)[:num_final_clusters])"
+    task_identifier = "$(note)$(positionwise_clustering ? "_poswise_cat_l$(Dict(kwargs...)[:num_latents])" : "")_id$(num_independent_clusters)_init$(Dict(kwargs...)[:num_init_clusters])_final$(Dict(kwargs...)[:num_final_clusters])"
     ll_file_name = "temp/temp_$(dataset)/logs/$(task_identifier)_parallel.log"
     if !isdir("temp/temp_$(dataset)/logs")
         mkpath("temp/temp_$(dataset)/logs")
@@ -132,7 +132,7 @@ end
 
 
 function progressive_growing(
-                            dataset, trn_data, trn_features, val_data, val_features,
+                            dataset_label, trn_data, trn_features, val_data, val_features,
                             global_task_id, task_identifier;
                             num_init_clusters = 1, num_final_clusters = 5, num_latents = 16, max_grow_frac = 0.4, batch_size = 512,prune_threshold = 0.001
                             )
@@ -144,20 +144,20 @@ function progressive_growing(
     trn_data_gpu = cu(trn_data)
     val_data_gpu = cu(val_data)
 
-    if !isdir("temp/temp_$(dataset)/init_pcs/$(task_identifier)")
-        mkpath("temp/temp_$(dataset)/init_pcs/$(task_identifier)")
+    if !isdir("temp/temp_$(dataset_label)/init_pcs/$(task_identifier)")
+        mkpath("temp/temp_$(dataset_label)/init_pcs/$(task_identifier)")
     end
 
-    if !isdir("temp/temp_$(dataset)/final_pcs/$(task_identifier)")
-        mkpath("temp/temp_$(dataset)/final_pcs/$(task_identifier)")
+    if !isdir("temp/temp_$(dataset_label)/final_pcs/$(task_identifier)")
+        mkpath("temp/temp_$(dataset_label)/final_pcs/$(task_identifier)")
     end
 
 
-    if !isdir("temp/temp_$(dataset)/logs/$(task_identifier)")
-        mkpath("temp/temp_$(dataset)/logs/$(task_identifier)")
+    if !isdir("temp/temp_$(dataset_label)/logs/$(task_identifier)")
+        mkpath("temp/temp_$(dataset_label)/logs/$(task_identifier)")
     end
 
-    grow_ll_file_name = "temp/temp_$(dataset)/logs/$(task_identifier)/$(global_task_id).log"
+    grow_ll_file_name = "temp/temp_$(dataset_label)/logs/$(task_identifier)/$(global_task_id).log"
 
     # Perform initial KMeans clustering
     # print("> Clustering all samples into $(num_init_clusters) clusters... ")
@@ -170,11 +170,11 @@ function progressive_growing(
     GC.gc()
 
     # Generate initial structure
-    base_dir = "temp/temp_$(dataset)/init_pcs/$(task_identifier)/$(global_task_id)"
+    base_dir = "temp/temp_$(dataset_label)/init_pcs/$(task_identifier)/$(global_task_id)"
     if !isdir(base_dir)
         mkpath(base_dir)
     end
-    base_dir1 = "temp/temp_$(dataset)/final_pcs/$(task_identifier)/$(global_task_id)"
+    base_dir1 = "temp/temp_$(dataset_label)/final_pcs/$(task_identifier)/$(global_task_id)"
     if !isdir(base_dir1)
         mkpath(base_dir1)
     end
@@ -192,9 +192,9 @@ function progressive_growing(
             # Convert to CPU Array explicitly just in case to avoid passing mixed arrays
             push!(datasets, Array(dataset))
         end
-        # println("datasets: $(datasets)")
-        if dataset == "wikitext"
-            pcs = categorical_emission_pcs(datasets, num_latents)
+        println("dataset: $(dataset_label)")
+        if dataset_label == "wikitext"
+            pcs = categorical_emission_pcs(datasets, num_latents; num_cats = 256)
         else
             pcs = joined_hclt(datasets, num_latents; num_cats = 256, input_type = Categorical)
             pcs = pcs[1:num_init_clusters]
@@ -465,7 +465,7 @@ println("dataset: $(dataset)")
 num_init_clusters = 2
 num_final_clusters = 4
 
-num_latents = dataset == "wikitext" ? 32 : 16
+num_latents = dataset == "wikitext" ? 2 : 16
 
 
 main(; dataset, start_cid, end_cid, num_independent_clusters, num_init_clusters = num_init_clusters, num_final_clusters = num_final_clusters, num_latents = num_latents, max_grow_frac = 0.4, batch_size = 32,
