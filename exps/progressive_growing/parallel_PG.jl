@@ -3,6 +3,8 @@ using NPZ
 using Printf
 using Statistics: mean
 
+cd(@__DIR__)
+
 include("../../VariationalJuice.jl/src/VariationalJuice.jl")
 include("../../VariationalJuice.jl/src-jl/LatentPCs.jl")
 push!(PyVector(pyimport("sys")["path"]), "./src")
@@ -45,6 +47,9 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
     if dataset == "imagenet32" || dataset == "imagenet64"
          trn_data = reshape(rgb2ycrcb(trn_data), (size(trn_data, 1), :))
          val_data = reshape(rgb2ycrcb(val_data), (size(val_data, 1), :))
+    elseif dataset == "wikitext"
+        trn_data = UInt8.(mod.(trn_data, 256))
+        val_data = UInt8.(mod.(val_data, 256))
     end
 
     positionwise_clustering = dataset == "wikitext" && length(size(yz_trn_features)) == 3
@@ -89,6 +94,7 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
     end
     total_trn_bpd = 0.0
     total_val_bpd = 0.0
+    val_bpd_count = 0
     for cid = start_cid : end_cid
         final_pc_fname = "temp/temp_$(dataset)/final_pcs/$(task_identifier)/$(cid)/final_pc_$(num_final_clusters).jpc"
 
@@ -119,8 +125,11 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
         )
         total_trn_bpd += trn_bpd
         mean_trn_bpd = total_trn_bpd / (cid - start_cid + 1)
-        total_val_bpd += val_bpd
-        mean_val_bpd = total_val_bpd / (cid - start_cid + 1)
+        if !isnan(val_bpd)
+            total_val_bpd += val_bpd
+            val_bpd_count += 1
+        end
+        mean_val_bpd = val_bpd_count > 0 ? total_val_bpd / val_bpd_count : NaN
 
 
         print(@sprintf("cid: %d trn: %.4f; val: %.4f mean(%.4f,%.4f) \n", cid, trn_bpd, val_bpd, mean_trn_bpd, mean_val_bpd))
@@ -140,6 +149,8 @@ function progressive_growing(
     num_val_examples = size(val_data, 1)
 
     num_vars = size(trn_data, 2)
+    effective_batch_size = min(batch_size, num_trn_examples)
+    effective_val_batch_size = min(128, max(num_val_examples, 1))
 
     trn_data_gpu = cu(trn_data)
     val_data_gpu = cu(val_data)
@@ -254,14 +265,18 @@ function progressive_growing(
 
         lls = mini_batch_em_for_multihead_pc(
             mhbpc, trn_data_gpu, trn_head_mask_gpu, 50;
-            batch_size, pseudocount = 0.1, soft_reg = 0.0, soft_reg_width = 3,
+            batch_size = effective_batch_size, pseudocount = 0.1, soft_reg = 0.0, soft_reg_width = 3,
             param_inertia = 0.9, param_inertia_end = 0.99
         )
         update_parameters(mhbpc)
 
 
-        per_sample_lls = Array(loglikelihoods(mhbpc, val_data_gpu, nothing; batch_size=128))
-        mean_bpd = -mean(per_sample_lls) / log(2.0) / num_vars
+        mean_bpd = if num_val_examples > 0
+            per_sample_lls = Array(loglikelihoods(mhbpc, val_data_gpu, nothing; batch_size=effective_val_batch_size))
+            -mean(per_sample_lls) / log(2.0) / num_vars
+        else
+            NaN
+        end
 
         println("  - Train bpd: $(-lls[end] / log(2.0) / num_vars)")
         println("  - Test  bpd: $mean_bpd")
@@ -270,12 +285,12 @@ function progressive_growing(
 
         ## Step 2: prune multi-head PC
         print("> Pruning multi-head PC...")
-        t = @elapsed pcs = prune_pc(pcs, trn_data_gpu, trn_head_mask_gpu; batch_size, prune_threshold, mhbpc)
+        t = @elapsed pcs = prune_pc(pcs, trn_data_gpu, trn_head_mask_gpu; batch_size = effective_batch_size, prune_threshold, mhbpc)
         println(@sprintf("done (%.2fs)", t))
 
         ## Step 3: evaluate and re-assign cluster ids
         mhbpc = CuMultiHeadBitsProbCircuit(pcs)
-        per_sample_lls = Array(loglikelihoods(mhbpc, trn_data_gpu, nothing; batch_size))
+        per_sample_lls = Array(loglikelihoods(mhbpc, trn_data_gpu, nothing; batch_size = effective_batch_size))
         mean_trn_bpd = -mean(per_sample_lls) / log(2.0) / num_vars
         best_lls, _ = findmax(per_sample_lls; dims = 2)
         min_trn_bpd = -mean(best_lls) / log(2.0) / num_vars
@@ -289,26 +304,31 @@ function progressive_growing(
         end
         trn_bpd = sum(per_cluster_bpd .* per_cluster_weight) / sum(per_cluster_weight)
 
-        per_sample_lls_val = Array(loglikelihoods(mhbpc, val_data_gpu, nothing; batch_size=128))
-        mean_val_bpd = -mean(per_sample_lls_val) / log(2.0) / num_vars
-        best_lls_val, _ = findmax(per_sample_lls_val; dims = 2)
-        min_val_bpd = -mean(best_lls_val) / log(2.0) / num_vars
+        if num_val_examples > 0
+            per_sample_lls_val = Array(loglikelihoods(mhbpc, val_data_gpu, nothing; batch_size=effective_val_batch_size))
+            mean_val_bpd = -mean(per_sample_lls_val) / log(2.0) / num_vars
+            best_lls_val, _ = findmax(per_sample_lls_val; dims = 2)
+            min_val_bpd = -mean(best_lls_val) / log(2.0) / num_vars
 
 
-        per_cluster_weight_val = map(1:num_clusters) do idx
-            sum(val_cls_ids .== idx)
-        end
-
-        per_cluster_ll_val = map(1:num_clusters) do idx
-            if per_cluster_weight_val[idx] > 0
-                mean(per_sample_lls_val[val_cls_ids .== idx, idx])
-            else
-                zero(Float32)
+            per_cluster_weight_val = map(1:num_clusters) do idx
+                sum(val_cls_ids .== idx)
             end
-        end
 
-        per_cluster_bpd_val = -per_cluster_ll_val / log(2.0) / num_vars
-        val_bpd = sum(per_cluster_bpd_val .* per_cluster_weight_val) / sum(per_cluster_weight_val)
+            per_cluster_ll_val = map(1:num_clusters) do idx
+                if per_cluster_weight_val[idx] > 0
+                    mean(per_sample_lls_val[val_cls_ids .== idx, idx])
+                else
+                    zero(Float32)
+                end
+            end
+
+            per_cluster_bpd_val = -per_cluster_ll_val / log(2.0) / num_vars
+            val_bpd = sum(per_cluster_bpd_val .* per_cluster_weight_val) / sum(per_cluster_weight_val)
+        else
+            mean_val_bpd = NaN
+            val_bpd = NaN
+        end
 
         println("  - Weighted bpd: ($(trn_bpd),$(val_bpd))")
         println("  - Overall average bpd: ($(mean_trn_bpd),$(mean_val_bpd))")
@@ -405,11 +425,12 @@ function progressive_growing(
             head_mask = zeros(Float32, num_trn_examples, num_clusters)
             ids = [CartesianIndex(i, j) for (i, j) in zip(collect(1:num_trn_examples), trn_cls_ids)]
             head_mask[ids] .= one(Float32)
+            grow_batch_size = min(effective_batch_size, sum(filter))
             pcs = grow_heads_by_flows(
                 pcs, trn_data_gpu[filter,:], cu(head_mask[filter,:]);
                 sigma = 0.2, node_selection_method = "percentage",
                 node_selection_args = Dict("grow_frac" => max(grow_n_clusters / (grow_n_clusters + num_clusters), 0.2)),
-                batch_size
+                batch_size = grow_batch_size
             )
             @assert length(pcs) == num_clusters + grow_n_clusters
             pcs
