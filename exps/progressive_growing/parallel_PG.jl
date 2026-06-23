@@ -11,6 +11,12 @@ push!(PyVector(pyimport("sys")["path"]), "./src")
 
 py"""
 from kmeans import train_kmeans_model, pred_kmeans_clusters
+import numpy as _np
+
+def subset_rows_1based(a, idx):
+    # idx comes from Julia's findall, so it is 1-based.
+    idx0 = _np.asarray(idx, dtype=_np.int64) - 1
+    return a[idx0, :]
 """
 
 np = pyimport("numpy")
@@ -41,8 +47,8 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
     note = "id" #or conv: features from vq-vae2 with independent decoder
     trn_data = np.load("data/data_$(dataset)/data_trn.npy")
     val_data = np.load("data/data_$(dataset)/data_val.npy")
-    yz_trn_features = np.load("data/data_$(dataset)/idfeat_trn.npy")
-    yz_val_features = np.load("data/data_$(dataset)/idfeat_val.npy")
+    yz_trn_features = np.load("data/data_$(dataset)/idfeat_trn.npy", mmap_mode="r")
+    yz_val_features = np.load("data/data_$(dataset)/idfeat_val.npy", mmap_mode="r")
 
     if dataset == "imagenet32" || dataset == "imagenet64"
          trn_data = reshape(rgb2ycrcb(trn_data), (size(trn_data, 1), :))
@@ -52,7 +58,7 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
         val_data = UInt8.(mod.(val_data, 256))
     end
 
-    positionwise_clustering = dataset == "wikitext" && length(size(yz_trn_features)) == 3
+    positionwise_clustering = dataset == "wikitext" && Int(yz_trn_features.ndim) == 3
 
     # Perform global KMeans clustering
     cls_file_name = "temp/temp_$(dataset)/global_indep_cls/clusters_$(num_independent_clusters)_$(note)$(positionwise_clustering ? "_poswise" : "").npz"
@@ -63,8 +69,8 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
         print("> Global clustering into $(num_independent_clusters) clusters... ")
         t = @elapsed begin
             centroids = py"train_kmeans_model"(yz_trn_features, num_independent_clusters)
-            trn_cls_ids = py"pred_kmeans_clusters"(centroids, yz_trn_features)
-            val_cls_ids = py"pred_kmeans_clusters"(centroids, yz_val_features)
+            trn_cls_ids = Int64.(py"pred_kmeans_clusters"(centroids, yz_trn_features))
+            val_cls_ids = Int64.(py"pred_kmeans_clusters"(centroids, yz_val_features))
         end
         println(@sprintf("done (%.2fs)", t))
         GC.gc()
@@ -80,8 +86,11 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
     if positionwise_clustering
         trn_data = np.reshape(trn_data, (-1, 1))
         val_data = np.reshape(val_data, (-1, 1))
-        yz_trn_features = np.reshape(yz_trn_features, (-1, size(yz_trn_features, 3)))
-        yz_val_features = np.reshape(yz_val_features, (-1, size(yz_val_features, 3)))
+        # reshape keeps mmap; only subsets will be loaded into RAM when indexed
+        feat_dim_trn = Int(yz_trn_features.shape[3])
+        feat_dim_val = Int(yz_val_features.shape[3])
+        yz_trn_features = np.reshape(yz_trn_features, (-1, feat_dim_trn))
+        yz_val_features = np.reshape(yz_val_features, (-1, feat_dim_val))
     end
 
 
@@ -96,14 +105,6 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
     total_val_bpd = 0.0
     val_bpd_count = 0
     for cid = start_cid : end_cid
-        final_pc_fname = "temp/temp_$(dataset)/final_pcs/$(task_identifier)/$(cid)/final_pc_$(num_final_clusters).jpc"
-
-        if isfile(final_pc_fname)
-            println(">>> Existing mhpc #$(cid) <<<")
-            continue
-        end
-
-
         println(">>> Progressive growing #$(cid) <<<")
         trn_filter = (trn_cls_ids .== cid)
         val_filter = (val_cls_ids .== cid)
@@ -113,12 +114,33 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
 
         println("tr_weight: $(trn_weight) ts_weight: $(val_weight)")
 
+        if trn_weight == 0
+            println(">>> Empty cluster #$(cid); skipping <<<")
+            continue
+        end
+
+        effective_final_clusters = max(1, min(Dict(kwargs...)[:num_final_clusters], trn_weight))
+        final_pc_fname = "temp/temp_$(dataset)/final_pcs/$(task_identifier)/$(cid)/final_pc_$(effective_final_clusters).jpc"
+        if isfile(final_pc_fname)
+            println(">>> Existing mhpc #$(cid) <<<")
+            continue
+        end
+
+        trn_idx = findall(trn_filter)
+        val_idx = findall(val_filter)
+
+        # yz_*_features are numpy memmaps/PyObjects. PyCall cannot index them with
+        # Julia BitVectors, so index in Python with explicit row ids, then convert
+        # the per-cluster subset to a normal Julia Array. These subsets are small.
+        trn_features_subset = Array(py"subset_rows_1based"(yz_trn_features, trn_idx))
+        val_features_subset = Array(py"subset_rows_1based"(yz_val_features, val_idx))
+
         trn_bpd, val_bpd = progressive_growing(
             dataset,
             trn_data[trn_filter,:],
-            yz_trn_features[trn_filter,:],
+            trn_features_subset,
             val_data[val_filter,:],
-            yz_val_features[val_filter,:],
+            val_features_subset,
             cid,
             task_identifier;
             kwargs...
@@ -148,6 +170,11 @@ function progressive_growing(
     num_trn_examples = size(trn_data, 1)
     num_val_examples = size(val_data, 1)
 
+    # Some global positionwise clusters can be extremely small. FAISS KMeans
+    # requires n_examples >= n_clusters, so cap local cluster counts per task.
+    num_init_clusters = max(1, min(num_init_clusters, num_trn_examples))
+    num_final_clusters = max(1, min(num_final_clusters, num_trn_examples))
+
     num_vars = size(trn_data, 2)
     effective_batch_size = min(batch_size, num_trn_examples)
     effective_val_batch_size = min(128, max(num_val_examples, 1))
@@ -174,8 +201,8 @@ function progressive_growing(
     # print("> Clustering all samples into $(num_init_clusters) clusters... ")
     t = @elapsed begin
         centroids = py"train_kmeans_model"(trn_features, num_init_clusters)
-        trn_cls_ids = py"pred_kmeans_clusters"(centroids, trn_features)
-        val_cls_ids = py"pred_kmeans_clusters"(centroids, val_features)
+        trn_cls_ids = Int64.(py"pred_kmeans_clusters"(centroids, trn_features))
+        val_cls_ids = Int64.(py"pred_kmeans_clusters"(centroids, val_features))
     end
     # println(@sprintf("done (%.2fs)", t))
     GC.gc()
@@ -228,18 +255,17 @@ function progressive_growing(
     ##choose which ckpt to save
     if num_final_clusters == 20
         c = [5,10,15,20]
-    end
-    if num_final_clusters == 10
+    elseif num_final_clusters == 10
         c = [4,7,10]
-    end
-    if num_final_clusters == 5
+    elseif num_final_clusters == 5
         c = [3,4,5]
-    end
-    if num_final_clusters == 4
+    elseif num_final_clusters == 4
         c = [4]
-    end
-    if num_final_clusters == 1
+    elseif num_final_clusters == 1
         c = [1]
+    else
+        # Happens for tiny global clusters after capping num_final_clusters.
+        c = [num_final_clusters]
     end
 
 
@@ -462,8 +488,8 @@ function progressive_growing(
             trn_filter .|= (trn_cls_ids .== cluster)
             val_filter .|= (val_cls_ids .== cluster)
         end
-        cls_ids_trn = py"pred_kmeans_clusters"(centroids, trn_features[trn_filter,:])
-        cls_ids_val = py"pred_kmeans_clusters"(centroids, val_features[val_filter,:])
+        cls_ids_trn = Int64.(py"pred_kmeans_clusters"(centroids, trn_features[trn_filter,:]))
+        cls_ids_val = Int64.(py"pred_kmeans_clusters"(centroids, val_features[val_filter,:]))
         GC.gc()
         for j = 1 : target_n_clusters
             if j <= length(grow_cls_true)
