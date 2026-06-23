@@ -36,44 +36,57 @@ def _train_2d_kmeans(train_features, n_clusters, gpu_id=0, centroids=None):
 def train_kmeans_model(train_features, n_clusters, gpu_id=0, centroids=None):
     print("Num GPUs detected by faiss:", faiss.get_num_gpus())
     print("Features shape:", train_features.shape)
-    train_features = np.asarray(train_features)
 
-    if train_features.ndim == 3:
+    # Important: do not call np.asarray(train_features) before checking ndim.
+    # For mmap'ed 3D wikitext features this would materialize the full ~147GB file.
+    ndim = getattr(train_features, "ndim", None)
+    if ndim is None:
+        train_features = np.asarray(train_features)
+        ndim = train_features.ndim
+
+    if ndim == 3:
         position_centroids = []
+        cents = None if centroids is None else np.asarray(centroids)
         for pos in range(train_features.shape[1]):
-            pos_centroids = None if centroids is None else np.asarray(centroids)[pos]
+            pos_centroids = None if cents is None else cents[pos]
             position_centroids.append(
                 _train_2d_kmeans(train_features[:, pos, :], n_clusters, gpu_id, pos_centroids)
             )
-        return np.stack(position_centroids, axis=0).tolist()
+        return np.stack(position_centroids, axis=0)
 
-    return _train_2d_kmeans(train_features, n_clusters, gpu_id, centroids).tolist()
+    return _train_2d_kmeans(train_features, n_clusters, gpu_id, centroids)
 
 
 def pred_kmeans_clusters(centroids, features):
-    features = np.asarray(features).astype(np.float32)
-    centroids = np.asarray(centroids).astype(np.float32)
+    centroids = np.asarray(centroids).astype(np.float32, copy=False)
 
-    if features.ndim == 3:
+    # Important: handle 3D mmap'ed features position by position. Calling
+    # np.asarray(features).astype(...) here would materialize the full file.
+    ndim = getattr(features, "ndim", None)
+    if ndim is None:
+        features = np.asarray(features)
+        ndim = features.ndim
+
+    if ndim == 3:
         labels_by_position = np.empty(features.shape[:2], dtype=np.int64)
         n_clusters = centroids.shape[1]
         for pos in range(features.shape[1]):
-            pos_features = np.ascontiguousarray(features[:, pos, :])
+            pos_features = np.ascontiguousarray(features[:, pos, :].astype(np.float32, copy=False))
             pos_centroids = np.ascontiguousarray(centroids[pos])
             index = faiss.IndexFlatL2(pos_centroids.shape[1])
             index.add(pos_centroids)
             _, labels = index.search(pos_features, 1)
             labels_by_position[:, pos] = labels.ravel() + pos * n_clusters
-        return (labels_by_position.ravel() + 1).tolist()
+        return labels_by_position.ravel() + 1
 
-    features = np.ascontiguousarray(features)
+    features = np.ascontiguousarray(np.asarray(features).astype(np.float32, copy=False))
     centroids = np.ascontiguousarray(centroids)
     index = faiss.IndexFlatL2(centroids.shape[1])
     index.add(centroids)
     _, labels = index.search(features, 1)
     labels = labels.ravel()
 
-    return (labels + 1).tolist()
+    return labels + 1
 
 
 def save_kmeans_model(centroids, model_path):
