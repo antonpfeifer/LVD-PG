@@ -10,6 +10,13 @@ def main():
     )
     parser.add_argument("--julia-project", default="../../")
     parser.add_argument("--dataset", default="wikitext")
+    parser.add_argument(
+        "--data-root",
+        default=os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "progressive_growing", "data")
+        ),
+        help="Directory containing data_<dataset>/data_trn.npy and data_val.npy",
+    )
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--num-independent-clusters", type=int, default=200)
     parser.add_argument("--num-init-clusters", type=int, default=2)
@@ -33,6 +40,8 @@ def main():
         script,
         "--dataset",
         args.dataset,
+        "--data-root",
+        args.data_root,
         "--gpu",
         str(args.gpu),
         "--num-independent-clusters",

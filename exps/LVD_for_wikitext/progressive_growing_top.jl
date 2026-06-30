@@ -9,6 +9,8 @@ include("../../VariationalJuice.jl/src-jl/LatentPCs.jl")
 
 np = pyimport("numpy")
 
+const DEFAULT_DATA_ROOT = normpath(joinpath(@__DIR__, "..", "progressive_growing", "data"))
+
 py"""
 import numpy as _np
 
@@ -22,8 +24,12 @@ function chain_clt_edges(num_vars::Integer)
     [(i, i + 1) for i = 1:num_vars-1]
 end
 
-function load_wikitext_data(dataset::String, split::String, num_samples::Integer)
-    data = Array(py"load_wikitext_slice"("data/data_$(dataset)/data_$(split).npy", num_samples))
+function load_wikitext_data(dataset::String, split::String, num_samples::Integer; data_root::String = DEFAULT_DATA_ROOT)
+    data_path = joinpath(data_root, "data_$(dataset)", "data_$(split).npy")
+    if !isfile(data_path)
+        error("Wikitext data file not found: $(data_path). Generate it with exps/LVD_for_wikitext/get_data_for_PG.py or pass --data-root pointing to the directory containing data_$(dataset)/.")
+    end
+    data = Array(py"load_wikitext_slice"(data_path, num_samples))
     UInt8.(mod.(data, 256))
 end
 
@@ -79,7 +85,7 @@ function build_top_level_pseudo_data(data, position_pcs, num_hidden_cats; batch_
     pseudo
 end
 
-function train_pg_top_level_wikitext(; dataset = "wikitext", fname_idx = 4,
+function train_pg_top_level_wikitext(; dataset = "wikitext", data_root = DEFAULT_DATA_ROOT, fname_idx = 4,
         num_independent_clusters = 200, num_init_clusters = 2, num_final_clusters = 4,
         num_latents = 64, num_tr_samples = 20_000, num_val_samples = 5_000,
         batch_size = 256, num_epochs1 = 10, num_epochs2 = 10,
@@ -98,8 +104,9 @@ function train_pg_top_level_wikitext(; dataset = "wikitext", fname_idx = 4,
     top_level_pc_fname = joinpath(top_level_dir, "$(task_identifier)_$(fname_idx).jpc")
 
     println("======= loading wikitext samples =======")
-    trn_data = load_wikitext_data(dataset, "trn", num_tr_samples)
-    val_data = load_wikitext_data(dataset, "val", num_val_samples)
+    println("  - data root: $(data_root)")
+    trn_data = load_wikitext_data(dataset, "trn", num_tr_samples; data_root = data_root)
+    val_data = load_wikitext_data(dataset, "val", num_val_samples; data_root = data_root)
     num_positions = size(trn_data, 2)
     @printf("  - train: %s, val: %s, positions: %d\n", string(size(trn_data)), string(size(val_data)), num_positions)
 
@@ -174,6 +181,7 @@ end
 if abspath(PROGRAM_FILE) == @__FILE__
     train_pg_top_level_wikitext(
         dataset = parse_arg("--dataset", "wikitext", String),
+        data_root = parse_arg("--data-root", DEFAULT_DATA_ROOT, String),
         fname_idx = parse_arg("--fname-idx", 4, Int),
         num_independent_clusters = parse_arg("--num-independent-clusters", 200, Int),
         num_init_clusters = parse_arg("--num-init-clusters", 2, Int),
