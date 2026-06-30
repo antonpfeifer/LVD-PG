@@ -7,7 +7,7 @@
 #SBATCH --mem=300G
 
 #SBATCH --job-name=wikitext_top_level_train
-#SBATCH --output=wikitext_top_level_300626.dat
+#SBATCH --output=../temp/logs/wikitext_top_level_300626.dat
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=anton.pfeifer@uni-muenster.de
 
