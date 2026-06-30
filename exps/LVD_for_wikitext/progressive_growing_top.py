@@ -5,7 +5,9 @@ import subprocess
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train the Wikitext progressive-growing top-level PC.")
+    parser = argparse.ArgumentParser(
+        description="Train the Wikitext progressive-growing top-level PC."
+    )
     parser.add_argument("--julia-project", default="../../")
     parser.add_argument("--dataset", default="wikitext")
     parser.add_argument("--gpu", type=int, default=0)
@@ -24,21 +26,35 @@ def main():
     env = os.environ.copy()
     env["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
 
-    script = os.path.join(os.path.dirname(__file__), "progressive_growing_top_wikitext.jl")
+    script = os.path.join(os.path.dirname(__file__), "progressive_growing_top.jl")
     cmd = [
-        "julia", f"--project={args.julia_project}", script,
-        "--dataset", args.dataset,
-        "--gpu", str(args.gpu),
-        "--num-independent-clusters", str(args.num_independent_clusters),
-        "--num-init-clusters", str(args.num_init_clusters),
-        "--num-final-clusters", str(args.num_final_clusters),
-        "--fname-idx", str(args.fname_idx),
-        "--num-latents", str(args.num_latents),
-        "--num-tr-samples", str(args.num_tr_samples),
-        "--num-val-samples", str(args.num_val_samples),
-        "--batch-size", str(args.batch_size),
-        "--num-epochs1", str(args.num_epochs1),
-        "--num-epochs2", str(args.num_epochs2),
+        "julia",
+        f"--project={args.julia_project}",
+        script,
+        "--dataset",
+        args.dataset,
+        "--gpu",
+        str(args.gpu),
+        "--num-independent-clusters",
+        str(args.num_independent_clusters),
+        "--num-init-clusters",
+        str(args.num_init_clusters),
+        "--num-final-clusters",
+        str(args.num_final_clusters),
+        "--fname-idx",
+        str(args.fname_idx),
+        "--num-latents",
+        str(args.num_latents),
+        "--num-tr-samples",
+        str(args.num_tr_samples),
+        "--num-val-samples",
+        str(args.num_val_samples),
+        "--batch-size",
+        str(args.batch_size),
+        "--num-epochs1",
+        str(args.num_epochs1),
+        "--num-epochs2",
+        str(args.num_epochs2),
     ]
     subprocess.run(cmd, check=True, env=env)
 

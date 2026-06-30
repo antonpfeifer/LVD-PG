@@ -7,7 +7,7 @@
 #SBATCH --mem=80G
 
 #SBATCH --job-name=imagenet_finetune
-#SBATCH --output=imagenet_finetune_160626.dat
+#SBATCH --output=../../temp/logs/imagenet_finetune_160626.dat
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=anton.pfeifer@uni-muenster.de
 
