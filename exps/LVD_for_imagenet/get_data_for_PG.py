@@ -10,10 +10,6 @@ import warnings
 import torch.optim as optim
 from torch.utils.data import Dataset
 
-from vqvae2_p4 import VQVAE2
-import vqvae2_p4
-import vqvae2_p8
-
 sys.path.append("../../src/pixelcnn")
 sys.path.append("../../src/vqvae2")
 sys.path.append("../../src/utils")
@@ -28,6 +24,11 @@ from src.vqvae2.vqvae2_scheduler import CycleScheduler
 from src.utils.ProgressBar import ProgressBar
 from src.utils.imagenet_loader import get_imagenet_dataloader
 import numpy as np
+
+from vqvae2_p4 import VQVAE2
+import vqvae2_p4
+import vqvae2_p8
+
 
 # from julia import Main as JL
 

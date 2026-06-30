@@ -1,0 +1,176 @@
+CONDA_PREFIX=/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg
+PYTHON=/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
+/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
+/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/julia
+PyCall Python: /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
+faiss ok
+┌ Warning: You are using a non-official build of Julia. This may cause issues with CUDA.jl.
+│ Please consider using an official build from https://julialang.org/downloads/.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:164
+┌ Warning: CUDA runtime library `libcusparse.so.12` was loaded from a system path, `/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/libcusparse.so.12`.
+│ This may cause errors.
+│ 
+│ If you're running under a profiler, this situation is expected. Otherwise,
+│ ensure that your library path environment variable (e.g., `PATH` on Windows
+│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│ 
+│ In any other case, please file an issue.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+┌ Warning: CUDA runtime library `libnvJitLink.so.12` was loaded from a system path, `/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/libnvJitLink.so.12`.
+│ This may cause errors.
+│ 
+│ If you're running under a profiler, this situation is expected. Otherwise,
+│ ensure that your library path environment variable (e.g., `PATH` on Windows
+│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│ 
+│ In any other case, please file an issue.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+┌ Warning: You are using a non-official build of Julia. This may cause issues with CUDA.jl.
+│ Please consider using an official build from https://julialang.org/downloads/.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:164
+┌ Warning: CUDA runtime library `libcusparse.so.12` was loaded from a system path, `/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/libcusparse.so.12`.
+│ This may cause errors.
+│ 
+│ If you're running under a profiler, this situation is expected. Otherwise,
+│ ensure that your library path environment variable (e.g., `PATH` on Windows
+│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│ 
+│ In any other case, please file an issue.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+┌ Warning: CUDA runtime library `libnvJitLink.so.12` was loaded from a system path, `/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/libnvJitLink.so.12`.
+│ This may cause errors.
+│ 
+│ If you're running under a profiler, this situation is expected. Otherwise,
+│ ensure that your library path environment variable (e.g., `PATH` on Windows
+│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│ 
+│ In any other case, please file an issue.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+dataset: wikitextdataset: wikitext
+
+> Global clustering into 200 clusters... > Global clustering into 200 clusters... done (11687.45s)
+done (11700.15s)
+>>> Progressive growing #1 <<<
+ERROR: LoadError: BoundsError: attempt to access 15239520×1 Matrix{UInt8} at index [4200160-element BitVector, 1:1]
+Stacktrace:
+ [1] throw_boundserror(A::Matrix{UInt8}, I::Tuple{Base.LogicalIndex{Int64, BitVector}, Base.Slice{Base.OneTo{Int64}}})
+   @ Base ./essentials.jl:15
+ [2] checkbounds
+   @ ./abstractarray.jl:699 [inlined]
+ [3] _getindex
+   @ ./multidimensional.jl:955 [inlined]
+ [4] getindex(::Matrix{UInt8}, ::BitVector, ::Function)
+   @ Base ./abstractarray.jl:1342
+ [5] main(; dataset::String, start_cid::Int64, end_cid::Int64, num_independent_clusters::Int64, kwargs::@Kwargs{num_init_clusters::Int64, num_final_clusters::Int64, num_latents::Int64, max_grow_frac::Float64, batch_size::Int64, prune_threshold::Float64})
+   @ Main /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/parallel_PG.jl:111
+ [6] top-level scope
+   @ /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/parallel_PG.jl:492
+ [7] include(mod::Module, _path::String)
+   @ Base ./Base.jl:306
+ [8] exec_options(opts::Base.JLOptions)
+   @ Base ./client.jl:317
+ [9] _start()
+   @ Base ./client.jl:550
+in expression starting at /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/parallel_PG.jl:492
+Num GPUs detected by faiss: 0
+Features shape: (131255, 32, 768)
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+>>> Progressive growing #3201 <<<
+ERROR: LoadError: BoundsError: attempt to access 15239520×1 Matrix{UInt8} at index [4200160-element BitVector, 1:1]
+Stacktrace:
+ [1] throw_boundserror(A::Matrix{UInt8}, I::Tuple{Base.LogicalIndex{Int64, BitVector}, Base.Slice{Base.OneTo{Int64}}})
+   @ Base ./essentials.jl:15
+ [2] checkbounds
+   @ ./abstractarray.jl:699 [inlined]
+ [3] _getindex
+   @ ./multidimensional.jl:955 [inlined]
+ [4] getindex(::Matrix{UInt8}, ::BitVector, ::Function)
+   @ Base ./abstractarray.jl:1342
+ [5] main(; dataset::String, start_cid::Int64, end_cid::Int64, num_independent_clusters::Int64, kwargs::@Kwargs{num_init_clusters::Int64, num_final_clusters::Int64, num_latents::Int64, max_grow_frac::Float64, batch_size::Int64, prune_threshold::Float64})
+   @ Main /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/parallel_PG.jl:111
+ [6] top-level scope
+   @ /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/parallel_PG.jl:492
+ [7] include(mod::Module, _path::String)
+   @ Base ./Base.jl:306
+ [8] exec_options(opts::Base.JLOptions)
+   @ Base ./client.jl:317
+ [9] _start()
+   @ Base ./client.jl:550
+in expression starting at /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/parallel_PG.jl:492
+Num GPUs detected by faiss: 0
+Features shape: (131255, 32, 768)
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+GPU Index failed: module 'faiss' has no attribute 'GpuIndexFlatConfig'. Falling back to CPU.
+################################# JOB REPORT ##################################
+Job ID: 42877129
+Cluster: palma2
+User/Group: mpfeife3/u0dawin
+State: COMPLETED (exit code 0)
+Cores: 1
+CPU Utilized: 03:18:00
+CPU Efficiency: 99.42% of 03:19:09 core-walltime
+Job Wall-clock time: 03:19:09
+Memory Utilized: 80.96 GB
+Memory Efficiency: 40.48% of 200.00 GB (200.00 GB/node)
+###############################################################################

@@ -1,0 +1,33 @@
+> Loading train_data_batch_10
+> Loading train_data_batch_6
+> Loading train_data_batch_5
+> Loading train_data_batch_4
+> Loading train_data_batch_2
+> Loading train_data_batch_1
+> Loading train_data_batch_9
+> Loading train_data_batch_7
+> Loading train_data_batch_8
+> Loading train_data_batch_3
+> Loading val_data
+> Model loaded
+> Getting data for vqclusters with patch size 4 and 400000 samples ... <
+
+> sampling data ... <
+
+> Getting data for vqclusters with patch size 4 and 40000 samples ... <
+
+> sampling data ... <
+
+> Data for progressive growing saved
+################################# JOB REPORT ##################################
+Job ID: 42948495
+Cluster: palma2
+User/Group: mpfeife3/u0dawin
+State: COMPLETED (exit code 0)
+Cores: 1
+CPU Utilized: 00:00:26
+CPU Efficiency: 70.27% of 00:00:37 core-walltime
+Job Wall-clock time: 00:00:37
+Memory Utilized: 31.96 GB
+Memory Efficiency: 15.98% of 200.00 GB (200.00 GB/node)
+###############################################################################

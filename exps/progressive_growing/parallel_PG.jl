@@ -232,7 +232,7 @@ function progressive_growing(
         end
         println("dataset: $(dataset_label)")
         if dataset_label == "wikitext"
-            pcs = categorical_emission_pcs(datasets, num_latents; num_cats = 256)
+            pcs = categorical_emission_pcs(datasets, num_latents; num_cats = 33278)
         else
             pcs = joined_hclt(datasets, num_latents; num_cats = 256, input_type = Categorical)
             pcs = pcs[1:num_init_clusters]
@@ -407,16 +407,36 @@ function progressive_growing(
 
 
         ## Step 4: decide clusters to grow
-        grow_cls_true = []
+        # Recompute cluster weights after the reassignment above.  The weights
+        # computed for reporting still refer to the previous assignments; using
+        # them here can select clusters that became empty, which then gives a
+        # zero grow batch size and crashes in grow_heads_by_flows.
+        current_cluster_weight = map(1:num_clusters) do idx
+            sum(trn_cls_ids .== idx)
+        end
+        grow_cls_true = Int[]
         sorted_lls = sortperm(per_cluster_ll)
         thr = Int(round(num_trn_examples * 0.4))
         cnt = 0
-        for i = 1 : num_clusters
-            push!(grow_cls_true,sorted_lls[i])
-            cnt += per_cluster_weight[sorted_lls[i]]
+        for cluster in sorted_lls
+            if current_cluster_weight[cluster] == 0 || isnan(per_cluster_ll[cluster])
+                continue
+            end
+            push!(grow_cls_true, cluster)
+            cnt += current_cluster_weight[cluster]
             if cnt > thr
                 break
             end
+        end
+
+        if isempty(grow_cls_true)
+            println("No non-empty clusters selected for growing; stopping progressive growing.")
+            for final_pc_fname in final_pc_fnames
+                if !isfile(final_pc_fname)
+                    write_mhpc(final_pc_fname, pcs)
+                end
+            end
+            break
         end
 
         if num_final_clusters <= 5
@@ -448,10 +468,14 @@ function progressive_growing(
             for cluster in grow_cls
                 filter .|= (trn_cls_ids .== cluster)
             end
+            num_grow_examples = sum(filter)
+            if num_grow_examples == 0
+                error("Selected grow clusters $(grow_cls) contain no training examples after reassignment.")
+            end
             head_mask = zeros(Float32, num_trn_examples, num_clusters)
             ids = [CartesianIndex(i, j) for (i, j) in zip(collect(1:num_trn_examples), trn_cls_ids)]
             head_mask[ids] .= one(Float32)
-            grow_batch_size = min(effective_batch_size, sum(filter))
+            grow_batch_size = min(effective_batch_size, num_grow_examples)
             pcs = grow_heads_by_flows(
                 pcs, trn_data_gpu[filter,:], cu(head_mask[filter,:]);
                 sigma = 0.2, node_selection_method = "percentage",

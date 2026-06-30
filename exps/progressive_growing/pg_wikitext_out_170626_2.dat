@@ -1,0 +1,44 @@
+CONDA_PREFIX=/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg
+PYTHON=/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
+/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
+/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/julia
+PyCall Python: /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
+faiss ok
+┌ Warning: You are using a non-official build of Julia. This may cause issues with CUDA.jl.
+│ Please consider using an official build from https://julialang.org/downloads/.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:164
+┌ Warning: CUDA runtime library `libcusparse.so.12` was loaded from a system path, `/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/libcusparse.so.12`.
+│ This may cause errors.
+│ 
+│ If you're running under a profiler, this situation is expected. Otherwise,
+│ ensure that your library path environment variable (e.g., `PATH` on Windows
+│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│ 
+│ In any other case, please file an issue.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+┌ Warning: CUDA runtime library `libnvJitLink.so.12` was loaded from a system path, `/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/libnvJitLink.so.12`.
+│ This may cause errors.
+│ 
+│ If you're running under a profiler, this situation is expected. Otherwise,
+│ ensure that your library path environment variable (e.g., `PATH` on Windows
+│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│ 
+│ In any other case, please file an issue.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+dataset: wikitext
+> Loaded global cluster ids
+pg_wikitext.sh: line 18: 3067915 Killed                  CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" parallel_PG.jl 1 3200 200 "wikitext"
+[2026-06-17T09:23:49.699] error: Detected 1 oom_kill event in StepId=42990505.0. Some of the step tasks have been OOM Killed.
+srun: error: r18n03: task 0: Out Of Memory
+################################# JOB REPORT ##################################
+Job ID: 42990505
+Cluster: palma2
+User/Group: mpfeife3/u0dawin
+State: FAILED (exit code 1)
+Cores: 1
+CPU Utilized: 00:14:26
+CPU Efficiency: 98.07% of 00:14:43 core-walltime
+Job Wall-clock time: 00:14:43
+Memory Utilized: 399.99 GB
+Memory Efficiency: 100.00% of 400.00 GB (400.00 GB/node)
+###############################################################################

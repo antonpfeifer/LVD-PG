@@ -5,8 +5,15 @@ from torch.nn import functional as F
 from einops import rearrange
 import numpy as np
 import sys
+from pathlib import Path
 
-sys.path.append("../../src/utils")
+SRC_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SRC_DIR))
+
+from contextAE.utils import (
+    discretized_mix_logistic_lls,
+    discretized_mix_logistic_loss,
+)
 
 from src.utils import *
 

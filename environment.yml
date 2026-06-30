@@ -1,6 +1,9 @@
 name: lvd-pg
 channels:
   - conda-forge
+  - pytorch
+  - nvidia
+  - defaults
 dependencies:
   - _openmp_mutex
   - annotated-doc
@@ -78,7 +81,6 @@ dependencies:
   - libev
   - libevent
   - libexpat
-  - libfaiss-gpu
   - libffi
   - libfreetype
   - libfreetype6

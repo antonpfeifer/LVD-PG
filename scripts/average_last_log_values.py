@@ -16,7 +16,7 @@ from pathlib import Path
 
 DEFAULT_LOG_DIR = Path(
     "exps/progressive_growing/temp/temp_wikitext/logs/"
-    "id_poswise_cat_l2_id20_init2_final4"
+    "id_poswise_cat_l2_id200_init2_final4"
 )
 
 NUMBER_RE = r"(?:[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?|[-+]?nan|[-+]?inf(?:inity)?)"

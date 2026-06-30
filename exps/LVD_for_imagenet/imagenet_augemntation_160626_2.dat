@@ -1,0 +1,40 @@
+> Loading train_data_batch_10
+> Loading train_data_batch_6
+> Loading train_data_batch_5
+> Loading train_data_batch_4
+> Loading train_data_batch_2
+> Loading train_data_batch_1
+> Loading train_data_batch_9
+> Loading train_data_batch_7
+> Loading train_data_batch_8
+> Loading train_data_batch_3
+> Loading val_data
+> Model loaded
+> Getting data for vqclusters with patch size 4 and 400000 samples ... <
+
+> sampling data ... <
+
+Traceback (most recent call last):
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/LVD_for_imagenet/get_data_for_PG.py", line 169, in <module>
+    main()
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/LVD_for_imagenet/get_data_for_PG.py", line 162, in main
+    get_data_for_vqclusters(args,model,device,train_loader,args.num_tr_samples,split='trn')
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/LVD_for_imagenet/get_data_for_PG.py", line 111, in get_data_for_vqclusters
+    np.save(data_dir + f"data_{split}.npy",sub_imgs.numpy().astype(np.uint8))
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/numpy/lib/npyio.py", line 542, in save
+    file_ctx = open(file, "wb")
+               ^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '../progressive_growing/data/data_imagenet32/data_trn.npy'
+srun: error: r18n03: task 0: Exited with exit code 1
+################################# JOB REPORT ##################################
+Job ID: 42948497
+Cluster: palma2
+User/Group: mpfeife3/u0dawin
+State: FAILED (exit code 1)
+Cores: 1
+CPU Utilized: 00:00:18
+CPU Efficiency: 69.23% of 00:00:26 core-walltime
+Job Wall-clock time: 00:00:26
+Memory Utilized: 20.84 GB
+Memory Efficiency: 10.42% of 200.00 GB (200.00 GB/node)
+###############################################################################
