@@ -21,4 +21,4 @@ conda activate lvd-pg
 ml palma/2024a
 ml GCC/13.3.0
 ml CUDA/13.0.2
-srun python get_data_for_PG.py --batch-size 4096 --max-chunks 2000000
+srun python ../get_data_for_PG.py --batch-size 4096 --max-chunks 2000000
