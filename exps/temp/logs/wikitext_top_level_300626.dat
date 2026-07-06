@@ -1,0 +1,14 @@
+/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python: can't open file '/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/LVD_for_wikitext/progressive_growing_top.py': [Errno 2] No such file or directory
+srun: error: r18n03: task 0: Exited with exit code 2
+################################# JOB REPORT ##################################
+Job ID: 43610771
+Cluster: palma2
+User/Group: mpfeife3/u0dawin
+State: FAILED (exit code 2)
+Cores: 1
+CPU Utilized: 00:00:01
+CPU Efficiency: 14.29% of 00:00:07 core-walltime
+Job Wall-clock time: 00:00:07
+Memory Utilized: 50.36 MB
+Memory Efficiency: 0.02% of 300.00 GB (300.00 GB/node)
+###############################################################################
