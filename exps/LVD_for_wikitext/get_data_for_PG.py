@@ -7,7 +7,7 @@ import torch
 from beartype import beartype
 from huggingface_loader import TokenizedChunkDataset, get_hf_dataloader
 from jaxtyping import Float, Int
-from transformers import AutoModel
+from transformers import AutoModel, AutoTokenizer
 
 sys.path.append("../../src/pixelcnn")
 sys.path.append("../../src/vqvae2")
@@ -170,6 +170,18 @@ def main():
     os.environ["CUDA_VISIBLE_DEVICES"] = f"{args.gpu}"
 
     model_id: str = args.teacher_model
+
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    tokenizer_vocab_size = max(
+        int(getattr(tokenizer, "vocab_size", 0)),
+        int(len(tokenizer)),
+    )
+    os.makedirs(args.output_dir, exist_ok=True)
+    with open(os.path.join(args.output_dir, "tokenizer_vocab_size.txt"), "w") as f:
+        f.write(f"{tokenizer_vocab_size}\n")
+    with open(os.path.join(args.output_dir, "tokenizer_name.txt"), "w") as f:
+        f.write(f"{model_id}\n")
+    print(f"Tokenizer vocab size: {tokenizer_vocab_size}")
 
     model = AutoModel.from_pretrained(model_id)
 

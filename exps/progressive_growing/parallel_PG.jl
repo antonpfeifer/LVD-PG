@@ -21,16 +21,32 @@ def subset_rows_1based(a, idx):
 
 np = pyimport("numpy")
 
+function wikitext_num_cats(data_dir, trn_data, val_data)
+    vocab_size_file = joinpath(data_dir, "tokenizer_vocab_size.txt")
+    if isfile(vocab_size_file)
+        num_cats = parse(Int, strip(read(vocab_size_file, String)))
+        max_token_id = Int(max(maximum(trn_data), maximum(val_data)))
+        if max_token_id >= num_cats
+            error("Wikitext token id $(max_token_id) is outside tokenizer vocab size $(num_cats). Regenerate data with the matching tokenizer/model.")
+        end
+        return num_cats
+    end
+
+    fallback_num_cats = Int(max(maximum(trn_data), maximum(val_data))) + 1
+    @warn "$(vocab_size_file) not found; falling back to max token id + 1 = $(fallback_num_cats). Regenerate data with get_data_for_PG.py to derive this from the tokenizer."
+    fallback_num_cats
+end
+
 
 function rgb2ycrcb(imgs)
     new_imgs = zeros(UInt8, size(imgs)...)
-    new_imgs[:,1,:,:] .= UInt8.(round.(clamp.(imgs[:,1,:,:] .* 0.2126 .+ imgs[:,2,:,:] .* 0.7152 .+ imgs[:,3,:,:] .* 0.0722, 0, 255)))
-    new_imgs[:,2,:,:] .= UInt8.(round.(clamp.(imgs[:,1,:,:] .* -0.1146 .+ imgs[:,2,:,:] .* -0.3854 .+ imgs[:,3,:,:] .* 0.5 .+ 128, 0, 255)))
-    new_imgs[:,3,:,:] .= UInt8.(round.(clamp.(imgs[:,1,:,:] .* 0.5 .+ imgs[:,2,:,:] .* -0.4542 .+ imgs[:,3,:,:] .* -0.0458 .+ 128, 0, 255)))
+    new_imgs[:, 1, :, :] .= UInt8.(round.(clamp.(imgs[:, 1, :, :] .* 0.2126 .+ imgs[:, 2, :, :] .* 0.7152 .+ imgs[:, 3, :, :] .* 0.0722, 0, 255)))
+    new_imgs[:, 2, :, :] .= UInt8.(round.(clamp.(imgs[:, 1, :, :] .* -0.1146 .+ imgs[:, 2, :, :] .* -0.3854 .+ imgs[:, 3, :, :] .* 0.5 .+ 128, 0, 255)))
+    new_imgs[:, 3, :, :] .= UInt8.(round.(clamp.(imgs[:, 1, :, :] .* 0.5 .+ imgs[:, 2, :, :] .* -0.4542 .+ imgs[:, 3, :, :] .* -0.0458 .+ 128, 0, 255)))
     new_imgs
 end
 
-function categorical_emission_pcs(datasets, num_latents; num_cats = 50368)
+function categorical_emission_pcs(datasets, num_latents; num_cats=50368)
     num_vars = size(datasets[1], 2)
     map(datasets) do _
         components = map(1:num_latents) do _
@@ -43,19 +59,21 @@ function categorical_emission_pcs(datasets, num_latents; num_cats = 50368)
     end
 end
 
-function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwargs...)
+function main(; dataset, start_cid, end_cid, num_independent_clusters=400, kwargs...)
     note = "id" #or conv: features from vq-vae2 with independent decoder
-    trn_data = np.load("data/data_$(dataset)/data_trn.npy")
-    val_data = np.load("data/data_$(dataset)/data_val.npy")
-    yz_trn_features = np.load("data/data_$(dataset)/idfeat_trn.npy", mmap_mode="r")
-    yz_val_features = np.load("data/data_$(dataset)/idfeat_val.npy", mmap_mode="r")
+    data_dir = "data/data_$(dataset)"
+    trn_data = np.load(joinpath(data_dir, "data_trn.npy"))
+    val_data = np.load(joinpath(data_dir, "data_val.npy"))
+    yz_trn_features = np.load(joinpath(data_dir, "idfeat_trn.npy"), mmap_mode="r")
+    yz_val_features = np.load(joinpath(data_dir, "idfeat_val.npy"), mmap_mode="r")
+    num_cats = dataset == "wikitext" ? wikitext_num_cats(data_dir, trn_data, val_data) : nothing
+    if dataset == "wikitext"
+        println("Wikitext tokenizer vocab size / num_cats: $(num_cats)")
+    end
 
     if dataset == "imagenet32" || dataset == "imagenet64"
-         trn_data = reshape(rgb2ycrcb(trn_data), (size(trn_data, 1), :))
-         val_data = reshape(rgb2ycrcb(val_data), (size(val_data, 1), :))
-    elseif dataset == "wikitext"
-        trn_data = UInt8.(mod.(trn_data, 256))
-        val_data = UInt8.(mod.(val_data, 256))
+        trn_data = reshape(rgb2ycrcb(trn_data), (size(trn_data, 1), :))
+        val_data = reshape(rgb2ycrcb(val_data), (size(val_data, 1), :))
     end
 
     positionwise_clustering = dataset == "wikitext" && Int(yz_trn_features.ndim) == 3
@@ -104,13 +122,13 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
     total_trn_bpd = 0.0
     total_val_bpd = 0.0
     val_bpd_count = 0
-    for cid = start_cid : end_cid
+    for cid = start_cid:end_cid
         println(">>> Progressive growing #$(cid) <<<")
         trn_filter = (trn_cls_ids .== cid)
         val_filter = (val_cls_ids .== cid)
 
-        trn_weight = size(trn_data[trn_filter,:],1)
-        val_weight = size(val_data[val_filter,:],1)
+        trn_weight = size(trn_data[trn_filter, :], 1)
+        val_weight = size(val_data[val_filter, :], 1)
 
         println("tr_weight: $(trn_weight) ts_weight: $(val_weight)")
 
@@ -137,12 +155,13 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters = 400, kwa
 
         trn_bpd, val_bpd = progressive_growing(
             dataset,
-            trn_data[trn_filter,:],
+            trn_data[trn_filter, :],
             trn_features_subset,
-            val_data[val_filter,:],
+            val_data[val_filter, :],
             val_features_subset,
             cid,
             task_identifier;
+            wikitext_num_cats = num_cats,
             kwargs...
         )
         total_trn_bpd += trn_bpd
@@ -163,10 +182,11 @@ end
 
 
 function progressive_growing(
-                            dataset_label, trn_data, trn_features, val_data, val_features,
-                            global_task_id, task_identifier;
-                            num_init_clusters = 1, num_final_clusters = 5, num_latents = 16, max_grow_frac = 0.4, batch_size = 512,prune_threshold = 0.001
-                            )
+    dataset_label, trn_data, trn_features, val_data, val_features,
+    global_task_id, task_identifier;
+    num_init_clusters=1, num_final_clusters=5, num_latents=16, max_grow_frac=0.4, batch_size=512, prune_threshold=0.001,
+    wikitext_num_cats=nothing
+)
     num_trn_examples = size(trn_data, 1)
     num_val_examples = size(val_data, 1)
 
@@ -225,19 +245,23 @@ function progressive_growing(
     if !isfile(init_pc_fname)
         println("> Constructing initial multi-headed PC...")
         datasets = []
-        for cid = 1 : num_init_clusters
-            dataset = trn_data[trn_cls_ids .== cid, :]
+        for cid = 1:num_init_clusters
+            dataset = trn_data[trn_cls_ids.==cid, :]
             # Convert to CPU Array explicitly just in case to avoid passing mixed arrays
             push!(datasets, Array(dataset))
         end
         println("dataset: $(dataset_label)")
         if dataset_label == "wikitext"
-            pcs = categorical_emission_pcs(datasets, num_latents; num_cats = 33278)
+            if wikitext_num_cats === nothing
+                wikitext_num_cats = Int(max(maximum(trn_data), maximum(val_data))) + 1
+                @warn "wikitext_num_cats was not provided; falling back to max token id + 1 = $(wikitext_num_cats)."
+            end
+            pcs = categorical_emission_pcs(datasets, num_latents; num_cats=Int(wikitext_num_cats))
         else
-            pcs = joined_hclt(datasets, num_latents; num_cats = 256, input_type = Categorical)
+            pcs = joined_hclt(datasets, num_latents; num_cats=256, input_type=Categorical)
             pcs = pcs[1:num_init_clusters]
         end
-        init_parameters(pcs; perturbation = 0.4)
+        init_parameters(pcs; perturbation=0.4)
 
         write_mhpc(init_pc_fname, pcs)
     else
@@ -254,11 +278,11 @@ function progressive_growing(
 
     ##choose which ckpt to save
     if num_final_clusters == 20
-        c = [5,10,15,20]
+        c = [5, 10, 15, 20]
     elseif num_final_clusters == 10
-        c = [4,7,10]
+        c = [4, 7, 10]
     elseif num_final_clusters == 5
-        c = [3,4,5]
+        c = [3, 4, 5]
     elseif num_final_clusters == 4
         c = [4]
     elseif num_final_clusters == 1
@@ -272,11 +296,11 @@ function progressive_growing(
     final_pc_fnames = []
     for ci in c
         final_pc_fname = joinpath(base_dir1, "final_pc_$(ci).jpc")
-        push!(final_pc_fnames,final_pc_fname)
+        push!(final_pc_fnames, final_pc_fname)
     end
     final_pc_fname = final_pc_fnames[1]
 
-    for iter = num_init_clusters : 2 * num_final_clusters
+    for iter = num_init_clusters:2*num_final_clusters
         println("==== Iteration $(iter) ====")
 
         num_clusters = length(pcs)
@@ -291,8 +315,8 @@ function progressive_growing(
 
         lls = mini_batch_em_for_multihead_pc(
             mhbpc, trn_data_gpu, trn_head_mask_gpu, 50;
-            batch_size = effective_batch_size, pseudocount = 0.1, soft_reg = 0.0, soft_reg_width = 3,
-            param_inertia = 0.9, param_inertia_end = 0.99
+            batch_size=effective_batch_size, pseudocount=0.1, soft_reg=0.0, soft_reg_width=3,
+            param_inertia=0.9, param_inertia_end=0.99
         )
         update_parameters(mhbpc)
 
@@ -311,29 +335,29 @@ function progressive_growing(
 
         ## Step 2: prune multi-head PC
         print("> Pruning multi-head PC...")
-        t = @elapsed pcs = prune_pc(pcs, trn_data_gpu, trn_head_mask_gpu; batch_size = effective_batch_size, prune_threshold, mhbpc)
+        t = @elapsed pcs = prune_pc(pcs, trn_data_gpu, trn_head_mask_gpu; batch_size=effective_batch_size, prune_threshold, mhbpc)
         println(@sprintf("done (%.2fs)", t))
 
         ## Step 3: evaluate and re-assign cluster ids
         mhbpc = CuMultiHeadBitsProbCircuit(pcs)
-        per_sample_lls = Array(loglikelihoods(mhbpc, trn_data_gpu, nothing; batch_size = effective_batch_size))
+        per_sample_lls = Array(loglikelihoods(mhbpc, trn_data_gpu, nothing; batch_size=effective_batch_size))
         mean_trn_bpd = -mean(per_sample_lls) / log(2.0) / num_vars
-        best_lls, _ = findmax(per_sample_lls; dims = 2)
+        best_lls, _ = findmax(per_sample_lls; dims=2)
         min_trn_bpd = -mean(best_lls) / log(2.0) / num_vars
 
         per_cluster_ll = map(1:num_clusters) do idx
-            mean(per_sample_lls[trn_cls_ids .== idx, idx])
+            mean(per_sample_lls[trn_cls_ids.==idx, idx])
         end
         per_cluster_bpd = -per_cluster_ll / log(2.0) / num_vars
         per_cluster_weight = map(1:num_clusters) do idx
-            size(per_sample_lls[trn_cls_ids .== idx, idx], 1)
+            size(per_sample_lls[trn_cls_ids.==idx, idx], 1)
         end
         trn_bpd = sum(per_cluster_bpd .* per_cluster_weight) / sum(per_cluster_weight)
 
         if num_val_examples > 0
             per_sample_lls_val = Array(loglikelihoods(mhbpc, val_data_gpu, nothing; batch_size=effective_val_batch_size))
             mean_val_bpd = -mean(per_sample_lls_val) / log(2.0) / num_vars
-            best_lls_val, _ = findmax(per_sample_lls_val; dims = 2)
+            best_lls_val, _ = findmax(per_sample_lls_val; dims=2)
             min_val_bpd = -mean(best_lls_val) / log(2.0) / num_vars
 
 
@@ -343,7 +367,7 @@ function progressive_growing(
 
             per_cluster_ll_val = map(1:num_clusters) do idx
                 if per_cluster_weight_val[idx] > 0
-                    mean(per_sample_lls_val[val_cls_ids .== idx, idx])
+                    mean(per_sample_lls_val[val_cls_ids.==idx, idx])
                 else
                     zero(Float32)
                 end
@@ -371,7 +395,7 @@ function progressive_growing(
                 break
             end
         else
-            for i = 2 : length(c) - 1
+            for i = 2:length(c)-1
                 if length(pcs) >= c[i] && length(pcs) < c[i+1]
                     final_pc_fname = final_pc_fnames[i]
                     break
@@ -401,8 +425,8 @@ function progressive_growing(
 
 
         per_sample_lls[ids] .+= 1.0 # Reluctant to switch cluster id
-        _, mxcls = findmax(per_sample_lls; dims = 2)
-        trn_cls_ids = map(id -> id.I[2], mxcls[:,1])
+        _, mxcls = findmax(per_sample_lls; dims=2)
+        trn_cls_ids = map(id -> id.I[2], mxcls[:, 1])
 
 
 
@@ -444,9 +468,9 @@ function progressive_growing(
         else
             thr1 = cnt ÷ 8000 #if dataset == "CIFAR10": 2500
             rand_min = length(grow_cls_true) + 1
-            rand_max = min(num_final_clusters, 2*length(grow_cls_true), thr1)
+            rand_max = min(num_final_clusters, 2 * length(grow_cls_true), thr1)
             if rand_min > rand_max
-                print("\n thr1:",thr1,"\n")
+                print("\n thr1:", thr1, "\n")
                 for final_pc_fname in final_pc_fnames
                     if !isfile(final_pc_fname)
                         write_mhpc(final_pc_fname, pcs)
@@ -454,7 +478,7 @@ function progressive_growing(
                 end
                 break
             end
-            target_n_clusters = rand_min + Int(round(rand()*(rand_max-rand_min)))
+            target_n_clusters = rand_min + Int(round(rand() * (rand_max - rand_min)))
         end
 
         grow_n_clusters = target_n_clusters - length(grow_cls_true)
@@ -477,10 +501,10 @@ function progressive_growing(
             head_mask[ids] .= one(Float32)
             grow_batch_size = min(effective_batch_size, num_grow_examples)
             pcs = grow_heads_by_flows(
-                pcs, trn_data_gpu[filter,:], cu(head_mask[filter,:]);
-                sigma = 0.2, node_selection_method = "percentage",
-                node_selection_args = Dict("grow_frac" => max(grow_n_clusters / (grow_n_clusters + num_clusters), 0.2)),
-                batch_size = grow_batch_size
+                pcs, trn_data_gpu[filter, :], cu(head_mask[filter, :]);
+                sigma=0.2, node_selection_method="percentage",
+                node_selection_args=Dict("grow_frac" => max(grow_n_clusters / (grow_n_clusters + num_clusters), 0.2)),
+                batch_size=grow_batch_size
             )
             @assert length(pcs) == num_clusters + grow_n_clusters
             pcs
@@ -495,13 +519,13 @@ function progressive_growing(
         for (i, cluster) in enumerate(grow_cls_true)
             trn_filter = (trn_cls_ids .== cluster)
             if i == 1
-                all_trn_data = trn_data[trn_filter,:]
-                all_trn_features = trn_features[trn_filter,:]
-                old_centroids = mean(trn_features[trn_filter,:],dims=1)
+                all_trn_data = trn_data[trn_filter, :]
+                all_trn_features = trn_features[trn_filter, :]
+                old_centroids = mean(trn_features[trn_filter, :], dims=1)
             else
-                all_trn_data = cat(all_trn_data,trn_data[trn_filter,:],dims=1)
-                all_trn_features = cat(all_trn_features,trn_features[trn_filter,:],dims=1)
-                old_centroids = cat(old_centroids,mean(trn_features[trn_filter,:],dims=1),dims=1)
+                all_trn_data = cat(all_trn_data, trn_data[trn_filter, :], dims=1)
+                all_trn_features = cat(all_trn_features, trn_features[trn_filter, :], dims=1)
+                old_centroids = cat(old_centroids, mean(trn_features[trn_filter, :], dims=1), dims=1)
             end
         end
 
@@ -512,16 +536,16 @@ function progressive_growing(
             trn_filter .|= (trn_cls_ids .== cluster)
             val_filter .|= (val_cls_ids .== cluster)
         end
-        cls_ids_trn = Int64.(py"pred_kmeans_clusters"(centroids, trn_features[trn_filter,:]))
-        cls_ids_val = Int64.(py"pred_kmeans_clusters"(centroids, val_features[val_filter,:]))
+        cls_ids_trn = Int64.(py"pred_kmeans_clusters"(centroids, trn_features[trn_filter, :]))
+        cls_ids_val = Int64.(py"pred_kmeans_clusters"(centroids, val_features[val_filter, :]))
         GC.gc()
-        for j = 1 : target_n_clusters
+        for j = 1:target_n_clusters
             if j <= length(grow_cls_true)
-                @views trn_cls_ids[trn_filter][cls_ids_trn .== j] .= grow_cls_true[j]
-                @views val_cls_ids[val_filter][cls_ids_val .== j] .= grow_cls_true[j]
+                @views trn_cls_ids[trn_filter][cls_ids_trn.==j] .= grow_cls_true[j]
+                @views val_cls_ids[val_filter][cls_ids_val.==j] .= grow_cls_true[j]
             else
-                @views trn_cls_ids[trn_filter][cls_ids_trn .== j] .= j + num_clusters - length(grow_cls_true)
-                @views val_cls_ids[val_filter][cls_ids_val .== j] .= j + num_clusters - length(grow_cls_true)
+                @views trn_cls_ids[trn_filter][cls_ids_trn.==j] .= j + num_clusters - length(grow_cls_true)
+                @views val_cls_ids[val_filter][cls_ids_val.==j] .= j + num_clusters - length(grow_cls_true)
             end
         end
     end
@@ -539,5 +563,5 @@ num_final_clusters = 4
 num_latents = dataset == "wikitext" ? 2 : 16
 
 
-main(; dataset, start_cid, end_cid, num_independent_clusters, num_init_clusters = num_init_clusters, num_final_clusters = num_final_clusters, num_latents = num_latents, max_grow_frac = 0.4, batch_size = 32,
-    prune_threshold = 1e-4)
+main(; dataset, start_cid, end_cid, num_independent_clusters, num_init_clusters=num_init_clusters, num_final_clusters=num_final_clusters, num_latents=num_latents, max_grow_frac=0.4, batch_size=32,
+    prune_threshold=1e-4)
