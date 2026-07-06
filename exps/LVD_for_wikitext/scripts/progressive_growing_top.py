@@ -5,17 +5,23 @@ import subprocess
 
 
 def main():
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.abspath(os.path.join(here, "..", ".."))
+
     parser = argparse.ArgumentParser(
         description="Train the Wikitext progressive-growing top-level PC."
     )
-    parser.add_argument("--julia-project", default="../../")
+    parser.add_argument("--julia-project", default=repo_root)
     parser.add_argument("--dataset", default="wikitext")
     parser.add_argument(
         "--data-root",
-        default=os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "progressive_growing", "data")
-        ),
+        default=os.path.abspath(os.path.join(here, "..", "progressive_growing", "data")),
         help="Directory containing data_<dataset>/data_trn.npy and data_val.npy",
+    )
+    parser.add_argument(
+        "--temp-root",
+        default=os.path.abspath(os.path.join(here, "..", "progressive_growing", "temp")),
+        help="Directory containing temp_<dataset>/final_pcs from the low-level PG run",
     )
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--num-independent-clusters", type=int, default=200)
@@ -31,7 +37,12 @@ def main():
     args = parser.parse_args()
 
     env = os.environ.copy()
-    env["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
+    julia_gpu = args.gpu
+    if "CUDA_VISIBLE_DEVICES" not in env:
+        # If we restrict visibility here, Julia should select the first
+        # visible device.  Under Slurm, keep the scheduler-provided setting.
+        env["CUDA_VISIBLE_DEVICES"] = str(args.gpu)
+        julia_gpu = 0
 
     script = os.path.join(os.path.dirname(__file__), "progressive_growing_top.jl")
     cmd = [
@@ -42,8 +53,10 @@ def main():
         args.dataset,
         "--data-root",
         args.data_root,
+        "--temp-root",
+        args.temp_root,
         "--gpu",
-        str(args.gpu),
+        str(julia_gpu),
         "--num-independent-clusters",
         str(args.num_independent_clusters),
         "--num-init-clusters",

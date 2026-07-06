@@ -10,6 +10,7 @@ include("../../VariationalJuice.jl/src-jl/LatentPCs.jl")
 np = pyimport("numpy")
 
 const DEFAULT_DATA_ROOT = normpath(joinpath(@__DIR__, "..", "progressive_growing", "data"))
+const DEFAULT_TEMP_ROOT = normpath(joinpath(@__DIR__, "..", "progressive_growing", "temp"))
 
 py"""
 import numpy as _np
@@ -17,7 +18,9 @@ import numpy as _np
 def load_wikitext_slice(path, n):
     a = _np.load(path, mmap_mode="r")
     n = min(int(n), a.shape[0])
-    return _np.asarray(a[:n])
+    # Return a writable, contiguous ndarray so PyCall can copy-convert it to
+    # a Julia Matrix.  Slices from mmap'ed .npy files are read-only PyObjects.
+    return _np.array(a[:n], dtype=_np.int32, copy=True)
 """
 
 # Generate edges for hclt
@@ -30,7 +33,7 @@ function load_wikitext_data(dataset::String, split::String, num_samples::Integer
     if !isfile(data_path)
         error("Wikitext data file not found: $(data_path). Generate it with exps/LVD_for_wikitext/get_data_for_PG.py or pass --data-root pointing to the directory containing data_$(dataset)/.")
     end
-    data = Array(py"load_wikitext_slice"(data_path, num_samples))
+    data = pycall(py"load_wikitext_slice", Array{Int32,2}, data_path, num_samples)
     UInt8.(mod.(data, 256))
 end
 
@@ -87,17 +90,18 @@ function build_top_level_pseudo_data(data, position_pcs, num_hidden_cats; batch_
     pseudo
 end
 
-function train_pg_top_level_wikitext(; dataset="wikitext", data_root=DEFAULT_DATA_ROOT, fname_idx=4,
-    num_independent_clusters=200, num_init_clusters=2, num_final_clusters=4,
-    num_latents=64, num_tr_samples=20_000, num_val_samples=5_000,
-    batch_size=256, num_epochs1=10, num_epochs2=10,
-    pseudocount=0.1, param_inertia1=0.9, param_inertia2=0.99,
-    param_inertia3=0.999, gpu=0)
+function train_pg_top_level_wikitext(; dataset = "wikitext", data_root = DEFAULT_DATA_ROOT,
+        temp_root = DEFAULT_TEMP_ROOT, fname_idx = 4,
+        num_independent_clusters = 200, num_init_clusters = 2, num_final_clusters = 4,
+        num_latents = 64, num_tr_samples = 20_000, num_val_samples = 5_000,
+        batch_size = 256, num_epochs1 = 10, num_epochs2 = 10,
+        pseudocount = 0.1, param_inertia1 = 0.9, param_inertia2 = 0.99,
+        param_inertia3 = 0.999, gpu = 0)
 
     select_gpu(gpu)
 
     note = "id"
-    base_dir = "temp/temp_$(dataset)"
+    base_dir = joinpath(temp_root, "temp_$(dataset)")
     task_identifier = "$(note)_poswise_cat_l2_id$(num_independent_clusters)_init$(num_init_clusters)_final$(num_final_clusters)"
     ll_file_name = joinpath(base_dir, "logs", "$(task_identifier)_parallel.log")
     top_level_dir = joinpath(base_dir, "top_level_pcs")
@@ -107,8 +111,9 @@ function train_pg_top_level_wikitext(; dataset="wikitext", data_root=DEFAULT_DAT
 
     println("======= loading wikitext samples =======")
     println("  - data root: $(data_root)")
-    trn_data = load_wikitext_data(dataset, "trn", num_tr_samples; data_root=data_root)
-    val_data = load_wikitext_data(dataset, "val", num_val_samples; data_root=data_root)
+    println("  - temp root: $(temp_root)")
+    trn_data = load_wikitext_data(dataset, "trn", num_tr_samples; data_root = data_root)
+    val_data = load_wikitext_data(dataset, "val", num_val_samples; data_root = data_root)
     num_positions = size(trn_data, 2)
     @printf("  - train: %s, val: %s, positions: %d\n", string(size(trn_data)), string(size(val_data)), num_positions)
 
@@ -189,18 +194,19 @@ end
 
 if abspath(PROGRAM_FILE) == @__FILE__
     train_pg_top_level_wikitext(
-        dataset=parse_arg("--dataset", "wikitext", String),
-        data_root=parse_arg("--data-root", DEFAULT_DATA_ROOT, String),
-        fname_idx=parse_arg("--fname-idx", 4, Int),
-        num_independent_clusters=parse_arg("--num-independent-clusters", 200, Int),
-        num_init_clusters=parse_arg("--num-init-clusters", 2, Int),
-        num_final_clusters=parse_arg("--num-final-clusters", 4, Int),
-        num_latents=parse_arg("--num-latents", 64, Int),
-        num_tr_samples=parse_arg("--num-tr-samples", 20_000, Int),
-        num_val_samples=parse_arg("--num-val-samples", 5_000, Int),
-        batch_size=parse_arg("--batch-size", 256, Int),
-        num_epochs1=parse_arg("--num-epochs1", 10, Int),
-        num_epochs2=parse_arg("--num-epochs2", 10, Int),
-        gpu=parse_arg("--gpu", 0, Int),
+        dataset = parse_arg("--dataset", "wikitext", String),
+        data_root = parse_arg("--data-root", DEFAULT_DATA_ROOT, String),
+        temp_root = parse_arg("--temp-root", DEFAULT_TEMP_ROOT, String),
+        fname_idx = parse_arg("--fname-idx", 4, Int),
+        num_independent_clusters = parse_arg("--num-independent-clusters", 200, Int),
+        num_init_clusters = parse_arg("--num-init-clusters", 2, Int),
+        num_final_clusters = parse_arg("--num-final-clusters", 4, Int),
+        num_latents = parse_arg("--num-latents", 64, Int),
+        num_tr_samples = parse_arg("--num-tr-samples", 20_000, Int),
+        num_val_samples = parse_arg("--num-val-samples", 5_000, Int),
+        batch_size = parse_arg("--batch-size", 256, Int),
+        num_epochs1 = parse_arg("--num-epochs1", 10, Int),
+        num_epochs2 = parse_arg("--num-epochs2", 10, Int),
+        gpu = parse_arg("--gpu", 0, Int),
     )
 end

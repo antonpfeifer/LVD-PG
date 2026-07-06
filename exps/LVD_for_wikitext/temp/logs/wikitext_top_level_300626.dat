@@ -1,0 +1,336 @@
+Precompiling packages...
+   3557.1 ms  ✓ CUDA_Runtime_jll
+   2322.5 ms  ✓ CUDA_Compiler_jll
+  46417.5 ms  ✓ CUDA
+   7050.3 ms  ✓ Atomix → AtomixCUDAExt
+   7188.2 ms  ✓ CUDA → SpecialFunctionsExt
+   3940.3 ms  ✓ ChowLiuTrees
+Info Given ProbabilisticCircuits was explicitly requested, output will be shown live [0K
+[0K┌ Warning: You are using a non-official build of Julia. This may cause issues with CUDA.jl.
+[0K│ Please consider using an official build from https://julialang.org/downloads/.
+[0K└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:164
+[0K┌ Warning: CUDA runtime library `libcublasLt.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcublasLt.so.13`.
+[0K│ This may cause errors.
+[0K│ 
+[0K│ If you're running under a profiler, this situation is expected. Otherwise,
+[0K│ ensure that your library path environment variable (e.g., `PATH` on Windows
+[0K│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+[0K│ 
+[0K│ In any other case, please file an issue.
+[0K└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+[0K┌ Warning: CUDA runtime library `libnvJitLink.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libnvJitLink.so.13`.
+[0K│ This may cause errors.
+[0K│ 
+[0K│ If you're running under a profiler, this situation is expected. Otherwise,
+[0K│ ensure that your library path environment variable (e.g., `PATH` on Windows
+[0K│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+[0K│ 
+[0K│ In any other case, please file an issue.
+[0K└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+[0K┌ Warning: CUDA runtime library `libcusparse.so.12` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcusparse.so.12`.
+[0K│ This may cause errors.
+[0K│ 
+[0K│ If you're running under a profiler, this situation is expected. Otherwise,
+[0K│ ensure that your library path environment variable (e.g., `PATH` on Windows
+[0K│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+[0K│ 
+[0K│ In any other case, please file an issue.
+[0K└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+   5061.5 ms  ✓ ProbabilisticCircuits
+  7 dependencies successfully precompiled in 70 seconds. 144 already precompiled.
+  4 dependencies had output during precompilation:
+┌ CUDA → SpecialFunctionsExt
+│  ┌ Warning: You are using a non-official build of Julia. This may cause issues with CUDA.jl.
+│  │ Please consider using an official build from https://julialang.org/downloads/.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:164
+│  ┌ Warning: CUDA runtime library `libcublasLt.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcublasLt.so.13`.
+│  │ This may cause errors.
+│  │ 
+│  │ If you're running under a profiler, this situation is expected. Otherwise,
+│  │ ensure that your library path environment variable (e.g., `PATH` on Windows
+│  │ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│  │ 
+│  │ In any other case, please file an issue.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+│  ┌ Warning: CUDA runtime library `libnvJitLink.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libnvJitLink.so.13`.
+│  │ This may cause errors.
+│  │ 
+│  │ If you're running under a profiler, this situation is expected. Otherwise,
+│  │ ensure that your library path environment variable (e.g., `PATH` on Windows
+│  │ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│  │ 
+│  │ In any other case, please file an issue.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+│  ┌ Warning: CUDA runtime library `libcusparse.so.12` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcusparse.so.12`.
+│  │ This may cause errors.
+│  │ 
+│  │ If you're running under a profiler, this situation is expected. Otherwise,
+│  │ ensure that your library path environment variable (e.g., `PATH` on Windows
+│  │ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│  │ 
+│  │ In any other case, please file an issue.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+└  
+┌ ChowLiuTrees
+│  ┌ Warning: You are using a non-official build of Julia. This may cause issues with CUDA.jl.
+│  │ Please consider using an official build from https://julialang.org/downloads/.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:164
+│  ┌ Warning: CUDA runtime library `libcublasLt.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcublasLt.so.13`.
+│  │ This may cause errors.
+│  │ 
+│  │ If you're running under a profiler, this situation is expected. Otherwise,
+│  │ ensure that your library path environment variable (e.g., `PATH` on Windows
+│  │ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│  │ 
+│  │ In any other case, please file an issue.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+│  ┌ Warning: CUDA runtime library `libnvJitLink.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libnvJitLink.so.13`.
+│  │ This may cause errors.
+│  │ 
+│  │ If you're running under a profiler, this situation is expected. Otherwise,
+│  │ ensure that your library path environment variable (e.g., `PATH` on Windows
+│  │ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│  │ 
+│  │ In any other case, please file an issue.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+│  ┌ Warning: CUDA runtime library `libcusparse.so.12` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcusparse.so.12`.
+│  │ This may cause errors.
+│  │ 
+│  │ If you're running under a profiler, this situation is expected. Otherwise,
+│  │ ensure that your library path environment variable (e.g., `PATH` on Windows
+│  │ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│  │ 
+│  │ In any other case, please file an issue.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+└  
+┌ ProbabilisticCircuits
+│  [Output was shown above]
+└  
+┌ Atomix → AtomixCUDAExt
+│  ┌ Warning: You are using a non-official build of Julia. This may cause issues with CUDA.jl.
+│  │ Please consider using an official build from https://julialang.org/downloads/.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:164
+│  ┌ Warning: CUDA runtime library `libcublasLt.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcublasLt.so.13`.
+│  │ This may cause errors.
+│  │ 
+│  │ If you're running under a profiler, this situation is expected. Otherwise,
+│  │ ensure that your library path environment variable (e.g., `PATH` on Windows
+│  │ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│  │ 
+│  │ In any other case, please file an issue.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+│  ┌ Warning: CUDA runtime library `libnvJitLink.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libnvJitLink.so.13`.
+│  │ This may cause errors.
+│  │ 
+│  │ If you're running under a profiler, this situation is expected. Otherwise,
+│  │ ensure that your library path environment variable (e.g., `PATH` on Windows
+│  │ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│  │ 
+│  │ In any other case, please file an issue.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+│  ┌ Warning: CUDA runtime library `libcusparse.so.12` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcusparse.so.12`.
+│  │ This may cause errors.
+│  │ 
+│  │ If you're running under a profiler, this situation is expected. Otherwise,
+│  │ ensure that your library path environment variable (e.g., `PATH` on Windows
+│  │ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│  │ 
+│  │ In any other case, please file an issue.
+│  └ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+└  
+┌ Warning: You are using a non-official build of Julia. This may cause issues with CUDA.jl.
+│ Please consider using an official build from https://julialang.org/downloads/.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:164
+┌ Warning: CUDA runtime library `libcublasLt.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcublasLt.so.13`.
+│ This may cause errors.
+│ 
+│ If you're running under a profiler, this situation is expected. Otherwise,
+│ ensure that your library path environment variable (e.g., `PATH` on Windows
+│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│ 
+│ In any other case, please file an issue.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+┌ Warning: CUDA runtime library `libnvJitLink.so.13` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libnvJitLink.so.13`.
+│ This may cause errors.
+│ 
+│ If you're running under a profiler, this situation is expected. Otherwise,
+│ ensure that your library path environment variable (e.g., `PATH` on Windows
+│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│ 
+│ In any other case, please file an issue.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+┌ Warning: CUDA runtime library `libcusparse.so.12` was loaded from a system path, `/Applic.HPC/Easybuild/zen4/2024a/software/CUDA/13.0.2/targets/x86_64-linux/lib/libcusparse.so.12`.
+│ This may cause errors.
+│ 
+│ If you're running under a profiler, this situation is expected. Otherwise,
+│ ensure that your library path environment variable (e.g., `PATH` on Windows
+│ or `LD_LIBRARY_PATH` on Linux) does not include CUDA library paths.
+│ 
+│ In any other case, please file an issue.
+└ @ CUDA /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/share/julia/packages/CUDA/bjncr/src/initialization.jl:198
+======= loading wikitext samples =======
+  - data root: /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/data
+  - temp root: /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp
+  - train: (20000, 32), val: (5000, 32), positions: 32
+======= loading low-level progressive-growing PCs =======
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/45/final_pc_4.jpc not found. Skipping cluster 45.
+  - position  1: 796 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/245/final_pc_4.jpc not found. Skipping cluster 245.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/324/final_pc_4.jpc not found. Skipping cluster 324.
+  - position  2: 792 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/564/final_pc_4.jpc not found. Skipping cluster 564.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/590/final_pc_4.jpc not found. Skipping cluster 590.
+  - position  3: 792 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/645/final_pc_4.jpc not found. Skipping cluster 645.
+  - position  4: 796 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/845/final_pc_4.jpc not found. Skipping cluster 845.
+  - position  5: 796 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/1045/final_pc_4.jpc not found. Skipping cluster 1045.
+  - position  6: 796 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/1245/final_pc_4.jpc not found. Skipping cluster 1245.
+  - position  7: 796 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/1445/final_pc_4.jpc not found. Skipping cluster 1445.
+  - position  8: 796 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/1645/final_pc_4.jpc not found. Skipping cluster 1645.
+  - position  9: 796 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/1964/final_pc_4.jpc not found. Skipping cluster 1964.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/1990/final_pc_4.jpc not found. Skipping cluster 1990.
+  - position 10: 792 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2045/final_pc_4.jpc not found. Skipping cluster 2045.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2124/final_pc_4.jpc not found. Skipping cluster 2124.
+  - position 11: 792 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2245/final_pc_4.jpc not found. Skipping cluster 2245.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2324/final_pc_4.jpc not found. Skipping cluster 2324.
+  - position 12: 792 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2445/final_pc_4.jpc not found. Skipping cluster 2445.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2479/final_pc_4.jpc not found. Skipping cluster 2479.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2524/final_pc_4.jpc not found. Skipping cluster 2524.
+  - position 13: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2645/final_pc_4.jpc not found. Skipping cluster 2645.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2679/final_pc_4.jpc not found. Skipping cluster 2679.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2724/final_pc_4.jpc not found. Skipping cluster 2724.
+  - position 14: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2845/final_pc_4.jpc not found. Skipping cluster 2845.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2879/final_pc_4.jpc not found. Skipping cluster 2879.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/2924/final_pc_4.jpc not found. Skipping cluster 2924.
+  - position 15: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3045/final_pc_4.jpc not found. Skipping cluster 3045.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3079/final_pc_4.jpc not found. Skipping cluster 3079.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3124/final_pc_4.jpc not found. Skipping cluster 3124.
+  - position 16: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3245/final_pc_4.jpc not found. Skipping cluster 3245.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3279/final_pc_4.jpc not found. Skipping cluster 3279.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3324/final_pc_4.jpc not found. Skipping cluster 3324.
+  - position 17: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3445/final_pc_4.jpc not found. Skipping cluster 3445.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3479/final_pc_4.jpc not found. Skipping cluster 3479.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3524/final_pc_4.jpc not found. Skipping cluster 3524.
+  - position 18: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3645/final_pc_4.jpc not found. Skipping cluster 3645.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3679/final_pc_4.jpc not found. Skipping cluster 3679.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3724/final_pc_4.jpc not found. Skipping cluster 3724.
+  - position 19: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3845/final_pc_4.jpc not found. Skipping cluster 3845.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3879/final_pc_4.jpc not found. Skipping cluster 3879.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/3924/final_pc_4.jpc not found. Skipping cluster 3924.
+  - position 20: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4045/final_pc_4.jpc not found. Skipping cluster 4045.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4079/final_pc_4.jpc not found. Skipping cluster 4079.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4124/final_pc_4.jpc not found. Skipping cluster 4124.
+  - position 21: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4245/final_pc_4.jpc not found. Skipping cluster 4245.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4279/final_pc_4.jpc not found. Skipping cluster 4279.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4324/final_pc_4.jpc not found. Skipping cluster 4324.
+  - position 22: 788 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4445/final_pc_4.jpc not found. Skipping cluster 4445.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4524/final_pc_4.jpc not found. Skipping cluster 4524.
+  - position 23: 792 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4602/final_pc_4.jpc not found. Skipping cluster 4602.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4635/final_pc_4.jpc not found. Skipping cluster 4635.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4678/final_pc_4.jpc not found. Skipping cluster 4678.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4685/final_pc_4.jpc not found. Skipping cluster 4685.
+  - position 24: 784 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/4845/final_pc_4.jpc not found. Skipping cluster 4845.
+  - position 25: 796 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/5045/final_pc_4.jpc not found. Skipping cluster 5045.
+  - position 26: 796 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/5235/final_pc_4.jpc not found. Skipping cluster 5235.
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/5346/final_pc_4.jpc not found. Skipping cluster 5346.
+  - position 27: 792 low-level heads
+  - position 28: 800 low-level heads
+  - position 29: 800 low-level heads
+Warning: file /scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/temp/temp_wikitext/final_pcs/id_poswise_cat_l2_id200_init2_final4/5882/final_pc_4.jpc not found. Skipping cluster 5882.
+  - position 30: 796 low-level heads
+  - position 31: 800 low-level heads
+  - position 32: 800 low-level heads
+> Top-level hidden categories per position: 800 <
+======= generating pseudo datasets for the top-level PC =======
+  - completed position  1 - low-level min/mean/max bpd: 1.27/7.94/14.88
+  - completed position  2 - low-level min/mean/max bpd: 1.81/7.94/14.93
+  - completed position  3 - low-level min/mean/max bpd: 0.20/8.02/15.06
+  - completed position  4 - low-level min/mean/max bpd: 0.18/7.95/14.93
+  - completed position  5 - low-level min/mean/max bpd: 1.56/7.96/15.04
+  - completed position  6 - low-level min/mean/max bpd: 0.71/7.95/14.98
+  - completed position  7 - low-level min/mean/max bpd: 0.30/7.97/14.96
+  - completed position  8 - low-level min/mean/max bpd: 1.09/7.99/15.10
+  - completed position  9 - low-level min/mean/max bpd: 1.12/7.97/15.06
+  - completed position 10 - low-level min/mean/max bpd: 0.24/8.01/15.10
+  - completed position 11 - low-level min/mean/max bpd: 0.17/8.01/14.98
+  - completed position 12 - low-level min/mean/max bpd: 0.27/8.00/15.14
+  - completed position 13 - low-level min/mean/max bpd: 0.56/8.00/14.82
+  - completed position 14 - low-level min/mean/max bpd: 0.69/8.02/15.15
+  - completed position 15 - low-level min/mean/max bpd: 1.49/7.96/15.12
+  - completed position 16 - low-level min/mean/max bpd: 0.88/7.99/15.19
+  - completed position 17 - low-level min/mean/max bpd: 0.15/7.97/14.87
+  - completed position 18 - low-level min/mean/max bpd: 0.26/8.00/14.70
+  - completed position 19 - low-level min/mean/max bpd: 1.44/8.01/15.02
+  - completed position 20 - low-level min/mean/max bpd: 0.26/8.05/14.89
+  - completed position 21 - low-level min/mean/max bpd: 1.38/7.99/14.89
+  - completed position 22 - low-level min/mean/max bpd: 1.23/8.01/15.18
+  - completed position 23 - low-level min/mean/max bpd: 0.32/8.02/14.94
+  - completed position 24 - low-level min/mean/max bpd: 0.84/8.03/14.96
+  - completed position 25 - low-level min/mean/max bpd: 0.24/8.07/15.05
+  - completed position 26 - low-level min/mean/max bpd: 0.25/8.09/14.84
+  - completed position 27 - low-level min/mean/max bpd: 0.53/8.28/22.53
+  - completed position 28 - low-level min/mean/max bpd: 0.35/8.30/22.53
+  - completed position 29 - low-level min/mean/max bpd: 0.22/8.36/15.11
+  - completed position 30 - low-level min/mean/max bpd: 0.02/8.70/15.37
+  - completed position 31 - low-level min/mean/max bpd: 0.01/9.61/15.81
+  - completed position 32 - low-level min/mean/max bpd: 0.01/11.42/16.01
+  - completed position  1 - low-level min/mean/max bpd: 1.27/7.95/14.88
+  - completed position  2 - low-level min/mean/max bpd: 1.81/7.92/14.93
+  - completed position  3 - low-level min/mean/max bpd: 0.20/8.03/15.06
+  - completed position  4 - low-level min/mean/max bpd: 0.18/7.95/14.93
+  - completed position  5 - low-level min/mean/max bpd: 1.56/8.03/15.04
+  - completed position  6 - low-level min/mean/max bpd: 0.71/7.96/14.98
+  - completed position  7 - low-level min/mean/max bpd: 0.30/7.99/14.96
+  - completed position  8 - low-level min/mean/max bpd: 1.09/7.98/15.10
+  - completed position  9 - low-level min/mean/max bpd: 1.12/8.00/15.06
+  - completed position 10 - low-level min/mean/max bpd: 0.24/8.00/15.10
+  - completed position 11 - low-level min/mean/max bpd: 0.17/8.03/14.98
+  - completed position 12 - low-level min/mean/max bpd: 0.27/8.01/15.14
+  - completed position 13 - low-level min/mean/max bpd: 0.56/7.91/14.82
+  - completed position 14 - low-level min/mean/max bpd: 0.69/7.98/15.15
+  - completed position 15 - low-level min/mean/max bpd: 1.49/7.98/15.12
+  - completed position 16 - low-level min/mean/max bpd: 0.88/7.99/15.19
+  - completed position 17 - low-level min/mean/max bpd: 0.15/7.99/14.87
+  - completed position 18 - low-level min/mean/max bpd: 0.26/8.02/14.70
+  - completed position 19 - low-level min/mean/max bpd: 1.44/8.02/15.02
+  - completed position 20 - low-level min/mean/max bpd: 0.26/8.06/14.89
+  - completed position 21 - low-level min/mean/max bpd: 1.38/7.99/14.89
+  - completed position 22 - low-level min/mean/max bpd: 1.23/7.97/15.18
+  - completed position 23 - low-level min/mean/max bpd: 0.32/7.99/14.94
+  - completed position 24 - low-level min/mean/max bpd: 0.84/8.04/14.96
+  - completed position 25 - low-level min/mean/max bpd: 0.24/8.08/15.05
+  - completed position 26 - low-level min/mean/max bpd: 0.25/8.08/14.84
+  - completed position 27 - low-level min/mean/max bpd: 0.53/8.28/22.53
+  - completed position 28 - low-level min/mean/max bpd: 0.35/8.32/22.53
+  - completed position 29 - low-level min/mean/max bpd: 0.22/8.36/15.11
+  - completed position 30 - low-level min/mean/max bpd: 0.02/8.69/15.37
+  - completed position 31 - low-level min/mean/max bpd: 0.01/9.60/15.81
+  - completed position 32 - low-level min/mean/max bpd: 0.01/11.43/16.01
+> Constructing top-level PC... done (1.55s)
+> Moving PC to GPU... done (0.25s)
+> Training top-level PC...
+Mini-batch EM epoch 1/10; train LL -165.41295
+Mini-batch EM epoch 2/10; train LL -165.19905
