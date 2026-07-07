@@ -161,7 +161,7 @@ function main(; dataset, start_cid, end_cid, num_independent_clusters=400, kwarg
             val_features_subset,
             cid,
             task_identifier;
-            wikitext_num_cats = num_cats,
+            wikitext_num_cats=num_cats,
             kwargs...
         )
         total_trn_bpd += trn_bpd
@@ -195,7 +195,7 @@ function progressive_growing(
     num_init_clusters = max(1, min(num_init_clusters, num_trn_examples))
     num_final_clusters = max(1, min(num_final_clusters, num_trn_examples))
 
-    num_vars = size(trn_data, 2)
+    num_vars = size(trn_data, 2)  # 1 for wikitext
     effective_batch_size = min(batch_size, num_trn_examples)
     effective_val_batch_size = min(128, max(num_val_examples, 1))
 
@@ -353,6 +353,7 @@ function progressive_growing(
             size(per_sample_lls[trn_cls_ids.==idx, idx], 1)
         end
         trn_bpd = sum(per_cluster_bpd .* per_cluster_weight) / sum(per_cluster_weight)
+        trn_perplexity = exp(trn_bpd * log(2.0))
 
         if num_val_examples > 0
             per_sample_lls_val = Array(loglikelihoods(mhbpc, val_data_gpu, nothing; batch_size=effective_val_batch_size))
@@ -375,18 +376,21 @@ function progressive_growing(
 
             per_cluster_bpd_val = -per_cluster_ll_val / log(2.0) / num_vars
             val_bpd = sum(per_cluster_bpd_val .* per_cluster_weight_val) / sum(per_cluster_weight_val)
+            val_perplexity = exp(val_bpd * log(2.0))
         else
             mean_val_bpd = NaN
             val_bpd = NaN
+            val_perplexity = NaN
         end
 
         println("  - Weighted bpd: ($(trn_bpd),$(val_bpd))")
+        println("  - Weighted perplexity: ($(trn_perplexity),$(val_perplexity))")
         println("  - Overall average bpd: ($(mean_trn_bpd),$(mean_val_bpd))")
         println("  - Number of nodes: $(length(mhbpc.bpc.nodes) - 1)")
         println("  - Number of edges: $(length(mhbpc.bpc.edge_layers_up.vectors) - num_clusters)")
 
         open(grow_ll_file_name, "a") do io
-            write(io, @sprintf("trn: %.4f  val: %.4f n_cls:%d \n", trn_bpd, val_bpd, length(pcs)))
+            write(io, @sprintf("trn: %.4f(%.4f)  val: %.4f(%.4f) n_cls:%d \n", trn_bpd, trn_perplexity, val_bpd, val_perplexity, length(pcs)))
         end
 
         if length(c) == 1
