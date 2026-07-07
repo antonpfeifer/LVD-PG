@@ -1,10 +1,15 @@
-#!/bin/usr/env bash
+#!/usr/bin/env bash
 set -e
+# Some login/slurm environments enable `set -u` (nounset). Conda's Julia
+# activation hook may append to JULIA_DEPOT_PATH before it exists, which then
+# aborts activation with: JULIA_DEPOT_PATH: unbound variable.
+set +u
+export JULIA_DEPOT_PATH="${JULIA_DEPOT_PATH:-}"
 source /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/etc/profile.d/conda.sh
 conda activate lvd-pg
 
 export PYTHON=/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$CONDA_PREFIX/lib/julia:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$CONDA_PREFIX/lib/julia:${LD_LIBRARY_PATH:-}"
 
 echo "CONDA_PREFIX=$CONDA_PREFIX"
 echo "PYTHON=$PYTHON"
