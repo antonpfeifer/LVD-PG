@@ -181,16 +181,12 @@ def main() -> None:
                 "Checkpoint settings do not match this run. "
                 "Use matching arguments or start without --resume."
             )
-        processed_articles = checkpoint.processed_articles
-        top_lengths = checkpoint.top_lengths.copy()
-        heapq.heapify(top_lengths)
+        resumed_lengths = checkpoint.top_lengths.copy()
+        heapq.heapify(resumed_lengths)
+        current = Checkpoint(identity, checkpoint.processed_articles, resumed_lengths)
     else:
-        processed_articles = 0
-        top_lengths = []
-        save_checkpoint(
-            args.checkpoint,
-            Checkpoint(identity, processed_articles, top_lengths.copy()),
-        )
+        current = Checkpoint(identity, processed_articles=0, top_lengths=[])
+        save_checkpoint(args.checkpoint, current)
 
     from datasets import load_dataset
     from tqdm.auto import tqdm
@@ -205,14 +201,14 @@ def main() -> None:
         streaming=True,
     )
     total_articles = dataset_total(dataset, identity.split)
-    if processed_articles:
-        dataset = dataset.skip(processed_articles)
+    if current.processed_articles:
+        dataset = dataset.skip(current.processed_articles)
 
     try:
         with tqdm(
             dataset,
             total=total_articles,
-            initial=processed_articles,
+            initial=current.processed_articles,
             unit="article",
             desc="Wikipedia",
         ) as articles:
@@ -226,26 +222,24 @@ def main() -> None:
                     top_n=identity.top_n,
                     batch_size=args.tokenization_batch_size,
                 )
-                update_top_lengths(top_lengths, article_lengths, identity.top_n)
-                processed_articles += 1
+                next_lengths = current.top_lengths.copy()
+                update_top_lengths(next_lengths, article_lengths, identity.top_n)
+                # One assignment commits both the article count and its results. An
+                # interruption before this point leaves the resumable state unchanged.
+                current = Checkpoint(
+                    identity,
+                    current.processed_articles + 1,
+                    next_lengths,
+                )
 
-                if processed_articles % args.checkpoint_every == 0:
-                    save_checkpoint(
-                        args.checkpoint,
-                        Checkpoint(identity, processed_articles, top_lengths.copy()),
-                    )
+                if current.processed_articles % args.checkpoint_every == 0:
+                    save_checkpoint(args.checkpoint, current)
     except (Exception, KeyboardInterrupt):
-        save_checkpoint(
-            args.checkpoint,
-            Checkpoint(identity, processed_articles, top_lengths.copy()),
-        )
+        save_checkpoint(args.checkpoint, current)
         raise
 
-    save_checkpoint(
-        args.checkpoint,
-        Checkpoint(identity, processed_articles, top_lengths.copy()),
-    )
-    print(sorted(top_lengths, reverse=True))
+    save_checkpoint(args.checkpoint, current)
+    print(sorted(current.top_lengths, reverse=True))
 
 
 if __name__ == "__main__":

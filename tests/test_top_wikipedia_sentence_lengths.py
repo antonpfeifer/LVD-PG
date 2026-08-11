@@ -14,7 +14,7 @@ from scripts.top_wikipedia_sentence_lengths import (
 
 
 class UpdateTopLengthsTests(unittest.TestCase):
-    def test_keeps_largest_lengths_in_descending_order(self) -> None:
+    def test_keeps_only_the_largest_lengths(self) -> None:
         top_lengths: list[int] = []
 
         update_top_lengths(top_lengths, [4, 12, 7, 3, 20, 9], limit=3)
