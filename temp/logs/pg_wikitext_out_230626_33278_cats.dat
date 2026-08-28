@@ -1,0 +1,14 @@
+/usr/bin/bash: pg_wikitext.sh: No such file or directory
+srun: error: r18n03: task 0: Exited with exit code 127
+################################# JOB REPORT ##################################
+Job ID: 43636610
+Cluster: palma2
+User/Group: mpfeife3/u0dawin
+State: FAILED (exit code 127)
+Cores: 1
+CPU Utilized: 00:00:00
+CPU Efficiency: 0.00% of 00:00:06 core-walltime
+Job Wall-clock time: 00:00:06
+Memory Utilized: 10.16 MB
+Memory Efficiency: 0.01% of 128.00 GB (128.00 GB/node)
+###############################################################################

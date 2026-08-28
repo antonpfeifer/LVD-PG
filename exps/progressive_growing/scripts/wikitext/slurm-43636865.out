@@ -1,0 +1,27 @@
+CONDA_PREFIX=/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg
+PYTHON=/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
+/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
+/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/julia
+PyCall Python: /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
+faiss ok
+ERROR: SystemError: opening file "/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing/scripts/wikitext/parallel_PG.jl": No such file or directory
+Stacktrace:
+ [1] include(mod::Module, _path::String)
+   @ Base ./Base.jl:306
+ [2] exec_options(opts::Base.JLOptions)
+   @ Base ./client.jl:317
+ [3] _start()
+   @ Base ./client.jl:550
+srun: error: r01n01: task 0: Exited with exit code 1
+################################# JOB REPORT ##################################
+Job ID: 43636865
+Cluster: palma2
+User/Group: mpfeife3/u0dawin
+State: FAILED (exit code 1)
+Cores: 1
+CPU Utilized: 00:00:04
+CPU Efficiency: 44.44% of 00:00:09 core-walltime
+Job Wall-clock time: 00:00:09
+Memory Utilized: 489.98 MB
+Memory Efficiency: 19.60% of 2.44 GB (2.44 GB/core)
+###############################################################################

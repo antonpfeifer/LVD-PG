@@ -1,10 +1,16 @@
-#!/bin/usr/env bash
+#!/usr/bin/env bash
 set -e
+# Some login/slurm environments enable `set -u` (nounset). Conda's Julia
+# activation hook may append to JULIA_DEPOT_PATH before it exists, which then
+# aborts activation with: JULIA_DEPOT_PATH: unbound variable.
+set +u
+export JULIA_DEPOT_PATH="${JULIA_DEPOT_PATH:-}"
+BASE_PATH="/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg"
 source /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/etc/profile.d/conda.sh
 conda activate lvd-pg
 
 export PYTHON=/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/bin/python
-export LD_LIBRARY_PATH=$CONDA_PREFIX/lib:$CONDA_PREFIX/lib/julia:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:$CONDA_PREFIX/lib/julia:${LD_LIBRARY_PATH:-}"
 
 echo "CONDA_PREFIX=$CONDA_PREFIX"
 echo "PYTHON=$PYTHON"
@@ -13,7 +19,7 @@ which julia
 
 julia -e 'using PyCall; println("PyCall Python: ", PyCall.pyprogramname); pyimport("faiss"); println("faiss ok")'
 
-julia_project_location="../../"
+julia_project_location=BASE_PATH
 
-CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" parallel_PG.jl 1 3200 200 "wikitext"
-CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" parallel_PG.jl 3201 6400 200 "wikitext"
+CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" "${BASE_PATH}/exps/progressive_growing/parallel_PG.jl" 1 3200 200 "wikitext"
+CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" "${BASE_PATH}/exps/progressive_growing/parallel_PG.jl" 3201 6400 200 "wikitext"
