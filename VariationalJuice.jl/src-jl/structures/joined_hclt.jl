@@ -35,7 +35,7 @@ function clts2rgraph(clts::Vector{MetaDiGraph}, num_vars::Integer)
                     InputRegionNode(0, BitSet([curr_var]))
                 end
                 push!(ch_rnodes, in_rnode)
-                
+
                 if scope in keys(scope2rnode)
                     inner_rn = scope2rnode[scope]
                     redundant = false
@@ -62,16 +62,16 @@ function clts2rgraph(clts::Vector{MetaDiGraph}, num_vars::Integer)
     scope2rnode[BitSet(collect(1:num_vars))]
 end
 
-function joined_hclt(datasets::Vector, num_hidden_cats; num_cats = nothing, shape = :directed,
+function joined_hclt(token_cid_datasets::Vector, num_hidden_cats;  num_cats = nothing, shape = :directed,
                      input_type = Literal, pseudocount = 0.1)
 
-    num_vars = size(datasets[1], 2)
+    num_vars = size(token_cid_datasets[1], 2)
 
     # Get all CLTs
     println("> Constructing CLTs...")
     clts = Vector{MetaDiGraph}()
-    for (i, data) in enumerate(datasets)
-        print(@sprintf("  - CLT #%03d/%03d... ", i, length(datasets)))
+    for (i, data) in enumerate(token_cid_datasets)
+        print(@sprintf("  - CLT #%03d/%03d... ", i, length(token_cid_datasets)))
         t = @elapsed begin
             # if data isa Array
             #     data = cu(data)
@@ -86,7 +86,7 @@ function joined_hclt(datasets::Vector, num_hidden_cats; num_cats = nothing, shap
     # Construct region graph
     rnode = clts2rgraph(clts, num_vars)
 
-    # Region graph 
+    # Region graph
     f_input(rn)::Vector{<:ProbCircuit} = begin
         if input_type == Categorical
             [PlainInputNode(randvar(rn), Categorical(num_cats)) for _ = 1 : num_hidden_cats]

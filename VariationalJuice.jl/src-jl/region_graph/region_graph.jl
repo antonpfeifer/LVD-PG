@@ -79,9 +79,8 @@ end
 import ProbabilisticCircuits: children, num_children, isinner, randvar, randvars # extend
 import DirectedAcyclicGraphs: NodeType # extend
 
-children(node::Union{PartitionNode,InnerRegionNode}) = node.children
-children(node::InputRegionNode) = []
-
+# NOTE (packaging): duplicate `children` defs removed here — lines below won in old include-order (see src/VariationalJuice.jl).
+# (Upstream look: these probably meant `num_children`; kept runtime behavior unchanged.)
 children(node::Union{PartitionNode,InnerRegionNode}) = length(node.children)
 children(node::InputRegionNode) = 0
 

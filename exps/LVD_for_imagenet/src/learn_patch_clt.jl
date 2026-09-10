@@ -3,8 +3,7 @@ using ChowLiuTrees: topk_MST
 using ProbabilisticCircuits: clt_edges2graphs
 using PyCall
 using Pickle
-
-include("../../../VariationalJuice.jl/src/VariationalJuice.jl")
+using VariationalJuice
 
 push!(PyVector(pyimport("sys")["path"]), "../")
 push!(PyVector(pyimport("sys")["path"]), "./src")

@@ -1,11 +1,10 @@
 using PyCall
 using Printf
 using Statistics: mean
+using CUDA
+using VariationalJuice
 
 cd(@__DIR__)
-
-include("../../VariationalJuice.jl/src/VariationalJuice.jl")
-include("../../VariationalJuice.jl/src-jl/LatentPCs.jl")
 
 np = pyimport("numpy")
 

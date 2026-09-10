@@ -130,6 +130,7 @@ dependencies:
   - narwhals
   - ncurses
   - networkx
+  - nltk
   - nlohmann_json
   - nomkl
   - numpy
