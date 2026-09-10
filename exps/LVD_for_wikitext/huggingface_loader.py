@@ -116,7 +116,9 @@ def _get_sentence_splitter():
     except LookupError:
         for package in ("punkt_tab", "punkt"):
             try:
-                nltk.download(package, quiet=True, raise_on_error=True)
+                import os
+                download_dir = os.getenv("TOKENIZER_DOWNLOAD_DIR", None)
+                nltk.download(package, quiet=True, raise_on_error=True, download_dir=download_dir)
                 nltk.sent_tokenize("Tokenizer data check.", language="english")
                 break
             except (LookupError, ValueError):
