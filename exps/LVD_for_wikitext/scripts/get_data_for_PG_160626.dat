@@ -1,0 +1,49 @@
+/var/spool/slurm/ctld/job46710246/slurm_script: line 15: ../../.env: No such file or directory
+Loading weights:   0%|          | 0/625 [00:00<?, ?it/s]Loading weights: 100%|██████████| 625/625 [00:00<00:00, 52560.20it/s]
+Default prompt name is set to 'default'. This prompt will be applied to all inference calls, except if a `prompt` or `prompt_name` parameter is provided.
+Traceback (most recent call last):
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/LVD_for_wikitext/scripts/../get_data_for_PG_sentence.py", line 186, in <module>
+    main()
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/LVD_for_wikitext/scripts/../get_data_for_PG_sentence.py", line 158, in main
+    train_loader, test_loader = get_hf_dataloader_sentence(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/LVD_for_wikitext/huggingface_loader.py", line 151, in get_hf_dataloader_sentence
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/transformers/models/auto/tokenization_auto.py", line 783, in from_pretrained
+    tokenizer_config = get_tokenizer_config(pretrained_model_name_or_path, **kwargs)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/transformers/models/auto/tokenization_auto.py", line 613, in get_tokenizer_config
+    resolved_config_file = cached_file(
+                           ^^^^^^^^^^^^
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/transformers/utils/hub.py", line 294, in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/transformers/utils/hub.py", line 535, in cached_files
+    raise e
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/transformers/utils/hub.py", line 438, in cached_files
+    hf_hub_download(
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/huggingface_hub/utils/_validators.py", line 88, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1035, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1257, in _hf_hub_download_to_cache_dir
+    _download_to_tmp_and_move(
+  File "/scratch/tmp/mpfeife3/bachelorarbeit/miniconda/envs/lvd-pg/lib/python3.11/site-packages/huggingface_hub/file_download.py", line 1970, in _download_to_tmp_and_move
+    with tmp_path.open("wb") as f:
+OSError: [Errno 122] Disk quota exceeded
+srun: error: r18n03: task 0: Exited with exit code 1
+################################# JOB REPORT ##################################
+Job ID: 46710246
+Cluster: palma2
+User/Group: mpfeife3/u0dawin
+State: FAILED (exit code 1)
+Cores: 1
+CPU Utilized: 00:00:16
+CPU Efficiency: 34.04% of 00:00:47 core-walltime
+Job Wall-clock time: 00:00:47
+Memory Utilized: 1.62 GB
+Memory Efficiency: 5.06% of 32.00 GB (32.00 GB/node)
+###############################################################################

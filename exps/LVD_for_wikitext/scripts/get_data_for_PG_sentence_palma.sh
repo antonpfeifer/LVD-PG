@@ -15,10 +15,13 @@ set -a
 source ../../.env
 set +a
 
+export SENTENCE_TRANSFORMERS_HOME="/scratch/tmp/mpfeife3/bachelorarbeit"
+export HUGGINGFACE_HUB_CACHE="/scratch/tmp/mpfeife3/bachelorarbeit/hf_cache"
+
 source /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/etc/profile.d/conda.sh
 conda activate lvd-pg
 
 ml palma/2024a
 ml GCC/13.3.0
 ml CUDA/13.0.2
-srun python ../get_data_for_PG_sentence.py --max-sentences 100000 --teacher-model Qwen/Qwen-3-VL-Embedding-2B --batch-size 16
+srun python ../get_data_for_PG_sentence.py --max-sentences 100000 --teacher-model "Qwen/Qwen3-VL-Embedding-2B" --batch-size 16
