@@ -1,8 +1,6 @@
 
 
-function select_gpu(idx)
-    device!(collect(devices())[idx+1])
-end
+# NOTE (packaging): `select_gpu` removed here — identical copy kept in src-jl/ (see src/VariationalJuice.jl).
 
 function num_categories(mbpc::CuMetaBitsProbCircuit)
     nodes = Array(mbpc.bpc.nodes)
@@ -46,60 +44,10 @@ function leaf_params(mbpc::CuMetaBitsProbCircuit, num_vars, n_hiddens; num_cats 
     pc_cat_params
 end
 
-function get_randvars(pc::ProbCircuit)
-    cache = Dict{ProbCircuit,BitSet}()
-    f_i(n) = BitSet([randvar(n)])
-    f_m(_, ins) = union(ins...)
-    f_s(_, ins) = union(ins...)
-    foldup_aggregate(pc, f_i, f_m, f_s, BitSet, cache)
-    cache
-end
+# NOTE (packaging): `get_randvars` removed here — identical copy kept in src-jl/ (see src/VariationalJuice.jl).
 
-function issmooth(pc::ProbCircuit)
-    flag = true
-    cache = get_randvars(pc)
-    foreach(pc) do n
-        if issum(n)
-            for i = 2 : num_inputs(n) 
-                if !issetequal(cache[n.inputs[i]], cache[n.inputs[1]])
-                    flag = false
-                end
-            end
-        end
-    end
-    flag
-end
+# NOTE (packaging): `issmooth` removed here — identical copy kept in src-jl/ (see src/VariationalJuice.jl).
 
-function isdecomposable(pc::ProbCircuit)
-    flag = true
-    cache = get_randvars(pc)
-    foreach(pc) do n
-        if ismul(n)
-            for i = 2 : num_inputs(n) 
-                if length(intersect(cache[n.inputs[i]], cache[n.inputs[1]])) >= 1
-                    flag = false
-                end
-            end
-        end
-    end
-    flag
-end
+# NOTE (packaging): `isdecomposable` removed here — identical copy kept in src-jl/ (see src/VariationalJuice.jl).
 
-function isvalid(pc::ProbCircuit)
-    flag = true
-    foreach(pc) do n
-        if issum(n)
-            if abs(sum(exp.(n.params)) - 1.0) > 1e-4
-                flag = false
-            end
-        elseif isinput(n)
-            d = dist(n)
-            if d isa Categorical
-                if abs(sum(exp.(d.logps)) - 1.0) > 1e-4
-                    flag = false
-                end
-            end
-        end
-    end
-    flag
-end
+# NOTE (packaging): `isvalid` removed here — identical copy kept in src-jl/ (see src/VariationalJuice.jl).

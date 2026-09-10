@@ -2,11 +2,10 @@ using PyCall
 using NPZ
 using Printf
 using Statistics: mean
+using VariationalJuice
 
 cd(@__DIR__)
 
-include("../../VariationalJuice.jl/src/VariationalJuice.jl")
-include("../../VariationalJuice.jl/src-jl/LatentPCs.jl")
 push!(PyVector(pyimport("sys")["path"]), "./src")
 
 py"""

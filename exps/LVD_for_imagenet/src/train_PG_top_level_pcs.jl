@@ -5,9 +5,8 @@ using Statistics: mean
 using Pickle
 using ChowLiuTrees: topk_MST
 using ProbabilisticCircuits: clt_edges2graphs
-
-include("../../../VariationalJuice.jl/src-jl/LatentPCs.jl")
-include("../../../VariationalJuice.jl/src/VariationalJuice.jl")
+using CUDA
+using VariationalJuice
 
 push!(PyVector(pyimport("sys")["path"]), "../")
 push!(PyVector(pyimport("sys")["path"]), "./src")

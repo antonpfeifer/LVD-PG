@@ -1,20 +1,5 @@
 
-function extract_lls_from_root_nodes(mars, mhbpc, head_mask, example_ids, lls)
-    root_ids = Array(mhbpc.root_ids)
-    lls .= typemin(Float32)
-    num_examples = length(example_ids)
-    if head_mask !== nothing
-        for i = 1 : length(root_ids)
-            lls[1:num_examples] .= PCs.logsumexp.(lls[1:num_examples], mars[1:num_examples,root_ids[i]] .+ log.(head_mask[example_ids,i]))
-        end
-        lls[1:num_examples] .-= log.(sum(head_mask[example_ids,:]; dims = 2))
-    else
-        for i = 1 : length(root_ids)
-            lls[1:num_examples,i] .= mars[1:num_examples,root_ids[i]]
-        end
-    end
-    lls
-end
+# NOTE (packaging): `extract_lls_from_root_nodes` removed here — identical copy kept in src-jl/ (see src/VariationalJuice.jl).
 
 
 

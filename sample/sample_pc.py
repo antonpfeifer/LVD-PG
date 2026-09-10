@@ -9,7 +9,7 @@ from julia import Main as JL
 print("Initializing Julia environment...")
 JL.eval('using Pkg; Pkg.activate(".")')
 JL.include("VariationalJuice.jl/src/VariationalJuice.jl")
-JL.include("VariationalJuice.jl/src-jl/LatentPCs.jl")
+JL.eval("using VariationalJuice")
 JL.eval("using ProbabilisticCircuits")
 
 

@@ -1,65 +1,539 @@
+module VariationalJuice
+
+# Direct dependencies: exactly the `using`s the old flat entry files had.
+# (Nothing more: wholesale `using Distributions` etc. would create
+# export ambiguities that never existed in Main.)
 using ProbabilisticCircuits
 import ProbabilisticCircuits as PCs
 using CUDA
+using NPZ
+using ChowLiuTrees
 
-
+# NOTE: includes below are the former flat-script entry points, in the same
+# order the exps/ scripts loaded them (src/ first, then src-jl/).
 include("nodes/fixable_categorical_dist.jl")
 include("nodes/gaussian_dist.jl")
 include("nodes/discrete_logistic_dist.jl")
 include("nodes/vtree.jl")
-
 include("bits_circuit.jl")
-
 include("misc.jl")
 include("transformations.jl")
-
 include("queries/likelihood.jl")
 include("queries/flow.jl")
 include("queries/gradient.jl")
 include("queries/kld.jl")
 include("queries/sample.jl")
 include("queries/td_prob.jl")
-
 include("learning/prob_flow_circuit.jl")
 include("learning/em.jl")
-
 include("regularization/reg_likelihood.jl")
 include("regularization/reg_flow.jl")
 include("regularization/reg_em.jl")
-
 include("sgd/adam.jl")
-
 include("structures/hclts.jl")
 include("structures/customizable_hclt.jl")
 include("structures/categorical_clt.jl")
 include("structures/hclt_new.jl")
-
 include("utils/preprocess_pcs.jl")
 include("utils/map_params.jl")
 include("utils/softmax.jl")
 include("utils/aggregate.jl")
 include("utils/cuda_preallocation.jl")
 include("utils/utils.jl")
-include("utils/information.jl")
+# NOTE: utils/information.jl intentionally not included — byte-identical copy
+# lives at ../src-jl/utils/information.jl (included below).
 include("utils/deepcopy.jl")
-
 include("prune_grow/prune.jl")
 include("prune_grow/grow.jl")
-
 include("pretrain/layered_bit_circuit.jl")
 include("pretrain/layered_value.jl")
 include("pretrain/layered_flow.jl")
 include("pretrain/mini_batch_warmup.jl")
-
 include("multi_head_pc/multi_head_bit_circuit.jl")
 include("multi_head_pc/multi_head_pc_likelihood.jl")
 include("multi_head_pc/multi_head_pc_flow.jl")
 include("multi_head_pc/multi_head_pc_em.jl")
-
 include("conditional_pc/bit_circuit.jl")
 include("conditional_pc/utils.jl")
 include("conditional_pc/likelihood.jl")
 include("conditional_pc/flow.jl")
-
 include("parameters/node_funcs.jl")
 include("parameters/gradient_em.jl")
+include("../src-jl/utils/information.jl")
+include("../src-jl/utils/utils.jl")
+include("../src-jl/utils/properties.jl")
+include("../src-jl/region_graph/region_graph.jl")
+include("../src-jl/learning/likelihood.jl")
+include("../src-jl/learning/flow.jl")
+include("../src-jl/learning/em.jl")
+include("../src-jl/lvd/init_lvd_pcs.jl")
+include("../src-jl/multi_head_pc/bit_circuit.jl")
+include("../src-jl/multi_head_pc/likelihood.jl")
+include("../src-jl/multi_head_pc/flow.jl")
+include("../src-jl/multi_head_pc/em.jl")
+include("../src-jl/multi_head_pc/io.jl")
+include("../src-jl/multi_head_pc/transformation.jl")
+include("../src-jl/multi_head_pc/prune.jl")
+include("../src-jl/structures/customizable_hclt.jl")
+include("../src-jl/structures/joined_hclt.jl")
+
+# Re-export direct dependencies so `using VariationalJuice` preserves the
+# unqualified names the old `include(...)` scripts got via transitive `using`s.
+# Modules beyond the big four are loaded (not `using`-ed) to avoid creating
+# export ambiguities that never existed in Main. Crucially, only names that
+# resolve to exactly one binding are exported: blindly exporting everything
+# would advertise ghosts (e.g. `mean`) that shadow scripts' own imports in
+# editors and break `using VariationalJuice` consumers.
+for _mod in (ProbabilisticCircuits, CUDA, NPZ, ChowLiuTrees,
+             Base.require(@__MODULE__, :DSP),
+             Base.require(@__MODULE__, :DirectedAcyclicGraphs),
+             Base.require(@__MODULE__, :Distributions),
+             Base.require(@__MODULE__, :Graphs),
+             Base.require(@__MODULE__, :JSON),
+             Base.require(@__MODULE__, :MetaGraphs),
+             Base.require(@__MODULE__, :PyCall),
+             Base.require(@__MODULE__, :Random),
+             Base.require(@__MODULE__, :Printf),
+             Base.require(@__MODULE__, :StatsBase),
+             Base.require(@__MODULE__, :StatsFuns))
+    for _n in names(_mod)
+        try
+            getfield(@__MODULE__, _n)
+            @eval export $_n
+        catch
+        end
+    end
+end
+
+export BitsDiscreteLogistic,
+    BitsFixableCategorical,
+    BitsGaussian,
+    CuCondBitsProbCircuit,
+    CuLayeredBitsProbCircuit,
+    CuMetaBitsProbCircuit,
+    CuMultiHeadBitsProbCircuit,
+    DiscreteLogistic,
+    FixableCategorical,
+    Gaussian,
+    InnerRegionNode,
+    InputRegionNode,
+    NodeType,
+    PartitionNode,
+    Vtree,
+    VtreeInnerNode,
+    VtreeLeafNode,
+    adam,
+    aggr_param_statistics_inner_kernel,
+    aggr_param_statistics_layer,
+    aggregate_param_statistics,
+    aggregate_param_statistics_inner,
+    apply_entropy_reg,
+    apply_entropy_reg_kernel,
+    apply_gradients,
+    apply_gradients_kernel,
+    bind_pc,
+    bits,
+    bottom_up_varset_order,
+    categorical_clt,
+    categorical_clt_group,
+    categorical_leaves,
+    check_edge_params_equal,
+    check_edge_params_equal_kernel,
+    check_edge_params_normalized,
+    check_edge_params_normalized_kernel,
+    check_input_params_equal,
+    check_input_params_equal_kernel,
+    check_input_params_normalized,
+    check_input_params_normalized_kernel,
+    check_params_equal,
+    check_params_normalized,
+    children,
+    clear_memory,
+    clts2rgraph,
+    compute_grad_em_update_target,
+    compute_gradients,
+    compute_gradients_kernel,
+    compute_head_flows,
+    compute_head_flows_kernel,
+    compute_head_mars,
+    compute_head_mars_kernel,
+    compute_mbpc_mapping,
+    cond_td_prob_free_mem,
+    cond_td_prob_inner_kernel,
+    cond_td_prob_inner_layer,
+    cond_td_prob_preallocation,
+    cond_td_prob_with_prealloc,
+    conditional_circuit_flows,
+    conditioned_add_pseudocount,
+    conditioned_add_pseudocount_kernel,
+    conditioned_td_prob,
+    conditioned_td_prob_inner,
+    conditioned_update_input_node_params,
+    conditioned_update_input_node_params_kernel,
+    conditioned_update_params,
+    conditioned_update_params_kernel,
+    convert_to_latent_pc,
+    copy,
+    copy_input_parameters_to_heap,
+    copy_input_parameters_to_heap_kernel,
+    copy_parameters_to_vec,
+    copy_parameters_to_vec_kernel,
+    copy_params_to_heap,
+    corr_hclt,
+    cpc_init_mar!,
+    cpc_init_mar!_kernel,
+    cpc_layer_down,
+    cpc_layer_down_kernel,
+    cpc_layer_up,
+    cpc_layer_up_kernel,
+    cum_edge_log_params_grad_kernel,
+    cum_edge_log_params_kernel,
+    cum_edge_params_kernel,
+    cum_input_log_params_grad_kernel,
+    cum_input_log_params_kernel,
+    cum_input_params_kernel,
+    customized_hclt,
+    customized_hclt_p2,
+    deepcopy,
+    diff_categorical_leaves,
+    direct_update_params,
+    edges2graphs,
+    eval_circuit,
+    eval_circuit_with_reg,
+    eval_conditional_circuit,
+    eval_multi_head_pc,
+    extract_lls_from_root_nodes,
+    flow,
+    flows_circuit,
+    flows_conditional_circuit,
+    foldup_aggregate,
+    foreach,
+    foreach_down,
+    get_edge_flow,
+    get_edge_kld_grad,
+    get_inputs_aux_heap,
+    get_marg_cont,
+    get_node_depth,
+    get_pairwise_cont,
+    get_param,
+    get_pc_depth,
+    get_randvars,
+    grad_em_unnorm_target_add_kernel,
+    grad_em_unnorm_target_mul_kernel,
+    grad_em_unnorm_target_sc_add_kernel,
+    grad_em_unnorm_target_sc_mul_kernel,
+    grad_em_update_input_node_params,
+    grad_em_update_input_node_params_add_kernel,
+    grad_em_update_input_node_params_mul_kernel,
+    grad_em_update_input_node_params_sc_add_kernel,
+    grad_em_update_input_node_params_sc_mul_kernel,
+    grad_em_update_params_add,
+    grad_em_update_params_mul,
+    grad_em_update_params_sc_add,
+    grad_em_update_params_sc_mul,
+    gradients,
+    gradients_from_flows,
+    gradients_from_flows_kernel,
+    gradients_from_input_flows,
+    gradients_from_input_flows_kernel,
+    group_vars_by_cgrid,
+    group_vars_by_grid,
+    grow_heads_by_flows,
+    grow_pc,
+    gumbel_input_sample_down,
+    gumbel_input_sample_down_kernel,
+    gumbel_input_sample_up,
+    gumbel_input_sample_up_kernel,
+    gumbel_input_step,
+    gumbel_input_target_sample_up,
+    gumbel_input_target_sample_up_kernel,
+    gumbel_params_down_kernel,
+    gumbel_params_target_up_layer_kernel,
+    gumbel_params_up_layer,
+    gumbel_params_up_layer_kernel,
+    gumbel_sample,
+    gumbel_sample_backward,
+    gumbel_sample_backward_with_prealloc,
+    gumbel_sample_down_kernel,
+    gumbel_sample_free_mem,
+    gumbel_sample_inner,
+    gumbel_sample_layer,
+    gumbel_sample_param_target,
+    gumbel_sample_preallocation,
+    gumbel_sample_target_with_prealloc,
+    gumbel_sample_with_prealloc,
+    gumbel_target_up_layer,
+    hard_update_params,
+    hard_update_params_kernel,
+    hclt,
+    hclt_for_colored_images,
+    hclt_from_clt,
+    hclt_from_clt_new,
+    hclt_new,
+    high_order_hclt_from_clt_new,
+    infer_vtree_and_heads,
+    init_kld!,
+    init_kld!_kernel,
+    init_kld_with_target!,
+    init_kld_with_target!_kernel,
+    init_lvd_pcs,
+    init_mar!,
+    init_mar!_kernel,
+    init_mar!_kernel2,
+    init_mar!_with_reg,
+    init_mar!_with_reg_cat_kernel,
+    init_mar!_with_reg_kernel,
+    init_parameters,
+    init_parameters_by_logits,
+    init_params,
+    input_flows_circuit,
+    input_flows_circuit_kernel,
+    input_flows_circuit_kernel2,
+    input_flows_circuit_with_reg,
+    input_flows_circuit_with_reg_cat_kernel,
+    input_flows_circuit_with_reg_kernel,
+    input_flows_conditional_circuit,
+    input_flows_conditional_circuit_kernel,
+    input_kld_down,
+    input_kld_down_kernel,
+    isdecomposable,
+    isinner,
+    issmooth,
+    isvalid,
+    joined_hclt,
+    kl_div,
+    kld,
+    kld_backward,
+    kld_backward_inner,
+    kld_backward_with_prealloc,
+    kld_clear_buffer_kernel,
+    kld_copyparams_kernel,
+    kld_forward_backward,
+    kld_free_mem,
+    kld_layer_down,
+    kld_layer_down_logparam_kernel,
+    kld_layer_down_param_kernel,
+    kld_layer_up,
+    kld_layer_up_kernel,
+    kld_norm_params_kernel,
+    kld_preallocation,
+    kld_shift_params_kernel,
+    kld_target_preallocation,
+    kld_update_params_kernel,
+    kld_with_prealloc,
+    kld_with_target,
+    kld_with_target_layer_up,
+    kld_with_update_target,
+    kld_with_update_target_prealloc,
+    large_dataset_training,
+    layer_down,
+    layer_down_kernel,
+    layer_up,
+    layer_up_kernel,
+    layer_wise_probs_flows_circuit,
+    layered_eval_circuit_with_reg,
+    layered_flows_circuit,
+    leaf_params,
+    load_and_transform_pc_with_mapping,
+    load_and_transform_to_latent_pc,
+    log_softmax,
+    log_softmax_edge_params,
+    log_softmax_edge_params_grad,
+    log_softmax_edge_params_grad_kernel,
+    log_softmax_edge_params_kernel,
+    log_softmax_grad,
+    log_softmax_input_params,
+    log_softmax_input_params_grad,
+    log_softmax_input_params_grad_kernel,
+    log_softmax_input_params_kernel,
+    loglikelihood,
+    loglikelihood_probcat,
+    loglikelihoods,
+    loglikelihoods_probcat,
+    logps,
+    map_flows,
+    map_flows_kernel,
+    map_input_flows,
+    map_input_flows_kernel,
+    map_input_raw_flows,
+    map_input_raw_flows_kernel,
+    map_input_raw_flows_normalize_kernel,
+    map_pc_parameters,
+    map_pc_parameters_kernel,
+    map_raw_flows,
+    map_raw_flows_kernel,
+    map_raw_flows_normalize_kernel1,
+    map_raw_flows_normalize_kernel2,
+    mar_cont,
+    mark_nodes,
+    merge_params,
+    merge_params_kernel,
+    mini_batch_em_beta,
+    mini_batch_em_for_multihead_pc,
+    mini_batch_em_with_reg,
+    mini_batch_gradient_em,
+    mu,
+    multi_head_flows_circuit,
+    multi_head_init_flows,
+    multi_head_init_flows_kernel,
+    multi_head_layer_down,
+    multi_head_layer_down_kernel,
+    multi_head_probs_flows_circuit,
+    multihead_loglikelihood_probcat,
+    multihead_loglikelihoods_probcat,
+    myhash,
+    normalize_edge_params,
+    normalize_edge_params_kernel,
+    normalize_edge_params_kernel1,
+    normalize_edge_params_kernel2,
+    normalize_edge_params_kernel3,
+    normalize_edge_params_kernel4,
+    normalize_input_params,
+    normalize_input_params_kernel,
+    normalize_parameters,
+    normalize_params,
+    normalize_params_step,
+    normalized_flows_free_mem,
+    normalized_flows_preallocation,
+    normalized_flows_with_prealloc,
+    num_categories,
+    num_edges,
+    num_inner_params,
+    num_input_params,
+    num_nodes,
+    num_parameters,
+    num_variables,
+    overprint,
+    pairwise_MI_chunked,
+    pairwise_marginal_kernel,
+    param_buffer_size,
+    params,
+    parse_rg_from_file,
+    pc_softmax,
+    pc_softmax_backward,
+    pc_softmax_backward_kernel,
+    pc_softmax_kernel,
+    per_node_grow_pc,
+    per_sample_flows,
+    per_sample_normalized_flows,
+    perturb,
+    perturb_parameters,
+    preprocess_inner_params_kernel,
+    preprocess_input_params_kernel,
+    probs_flows_circuit,
+    probs_flows_circuit_with_reg,
+    prune_pc,
+    randvar,
+    randvars,
+    read_mhpc,
+    reg_flows_circuit,
+    reg_layer_down,
+    reg_layer_down_kernel,
+    reg_mini_batch_em,
+    scale_flows,
+    scale_flows_kernel,
+    scaled_probs_flows_circuit,
+    select_gpu,
+    select_latent_variables,
+    set_param,
+    shift_grads_kernel,
+    sigma,
+    sigmoid,
+    single_and_pairwise_marginal,
+    single_marginal,
+    single_marginal_kernel,
+    soft_flow,
+    soft_flow_params,
+    soft_loglikelihood,
+    td_prob,
+    td_prob_inner,
+    td_prob_inner_kernel,
+    td_prob_inner_layer,
+    to_gpu,
+    tri_MI_chunked,
+    triwise_marginal,
+    triwise_marginal_kernel,
+    unbits,
+    undo_normalize_params_step,
+    unnormalize_inner_params_grad_kernel,
+    unnormalize_input_params_grad_kernel,
+    unnormalize_params_grad,
+    unnormalize_params_grad_step,
+    update_edge_parameters_to_bpc,
+    update_edge_parameters_to_bpc_kernel,
+    update_input_node_params_adam,
+    update_input_node_params_adam_kernel,
+    update_input_parameters_to_bpc,
+    update_input_parameters_to_bpc_kernel,
+    update_log_parameters,
+    update_log_parameters_add_kernel,
+    update_log_parameters_mul_kernel,
+    update_log_parameters_sc_add_kernel,
+    update_parameters,
+    update_parameters_to_bpc,
+    update_params,
+    update_params_adam,
+    update_params_inner_kernel,
+    update_params_input_kernel,
+    update_params_with_reg,
+    update_params_with_reg_kernel,
+    vectorize_parameters,
+    vectorize_parameters_inner_kernel,
+    vectorize_parameters_input_kernel,
+    warmup_with_mini_batch_em,
+    weighted_ll,
+    write_mhpc
+
+# Explicit re-exports: names pulled in via `using X: name` in package files,
+# so scripts keep the unqualified access the old `include(...)` world gave them.
+export BitsCategorical,
+    BitsInput,
+    BitsMul,
+    BitsNode,
+    BitsSum,
+    Categorical,
+    CuBitsProbCircuit,
+    FlatVectors,
+    InputDist,
+    JpcFormat,
+    Literal,
+    MetaDiGraph,
+    MulEdge,
+    Normal,
+    PlainInputNode,
+    PlainSumNode,
+    RegionGraph,
+    SimpleGraph,
+    SumEdge,
+    Uniform,
+    Var,
+    add_edge!,
+    balance_threads,
+    bfs_tree,
+    bottom_up_order,
+    center,
+    clear_input_node_mem,
+    clt_edges2graphs,
+    dist,
+    get_prop,
+    hash,
+    indegree,
+    isfirst,
+    islast,
+    isonlysubedge,
+    ispartial,
+    learn_chow_liu_tree,
+    logsumexp,
+    loguniform,
+    num_children,
+    nv,
+    outneighbors,
+    percentile,
+    prep_memory,
+    rand,
+    set_prop!,
+    tag_at,
+    tagged_at,
+    vertices
+
+end # module VariationalJuice

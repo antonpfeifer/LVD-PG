@@ -1,117 +1,12 @@
 
 
-soft_flow(d, value, node_flow, heap, soft_reg, soft_reg_width) = begin
-    if ismissing(value)
-        CUDA.@atomic heap[d.heap_start+UInt32(2)*d.num_cats] += node_flow
-    else
-        c_start = max(0, value - soft_reg_width ÷ 2)
-        c_end = min(c_start + soft_reg_width - 1, d.num_cats - 1)
-        sp = zero(Float32)
-        for cat_idx = c_start : c_end
-            sp += exp(heap[d.heap_start + cat_idx])
-        end
-        sp /= (c_end - c_start + 1)
-        base = (one(Float32) - soft_reg) * heap[d.heap_start+UInt32(value)] + soft_reg * sp
+# NOTE (packaging): `soft_flow` removed here — identical copy kept in src-jl/.
 
-        CUDA.@atomic heap[d.heap_start+d.num_cats+UInt32(value)] += (one(Float32) - soft_reg) * heap[d.heap_start+UInt32(value)] * node_flow / base
-        for cat_idx = c_start : c_end
-            CUDA.@atomic heap[d.heap_start+d.num_cats+UInt32(cat_idx)] += soft_reg / (c_end - c_start + 1) * heap[d.heap_start+UInt32(cat_idx)] * node_flow / base
-        end
-    end
-    nothing
-end
+# NOTE (packaging): `input_flows_circuit_with_reg_kernel` removed here — src-jl/ copy wins (see src/VariationalJuice.jl).
 
-function input_flows_circuit_with_reg_kernel(flows, nodes, input_node_ids, heap, data, example_ids, num_ex_threads::Int32, node_work::Int32, 
-                                             soft_reg::Float32, soft_reg_width::Int32, weights)
-    threadid = ((blockIdx().x - one(Int32)) * blockDim().x) + threadIdx().x
+# NOTE (packaging): `input_flows_circuit_with_reg_cat_kernel` removed here — src-jl/ copy wins (see src/VariationalJuice.jl).
 
-    node_batch, ex_id = fldmod1(threadid, num_ex_threads)
-
-    node_start = one(Int32) + (node_batch - one(Int32)) * node_work
-    node_end = min(node_start + node_work - one(Int32), length(input_node_ids))
-
-    @inbounds if ex_id <= length(example_ids)
-        for node_id = node_start : node_end
-            orig_ex_id::Int32 = example_ids[ex_id]
-            orig_node_id::UInt32 = input_node_ids[node_id]
-            node_flow::Float32 = flows[ex_id, orig_node_id]
-            if !isnothing(weights)
-                node_flow *= weights[orig_ex_id]
-            end
-            inputnode = nodes[orig_node_id]::BitsInput
-            variable = inputnode.variable
-            value = data[orig_ex_id, variable]
-            soft_flow(dist(inputnode), value, node_flow, heap, soft_reg, soft_reg_width)
-        end
-    end
-    nothing
-end
-
-function input_flows_circuit_with_reg_cat_kernel(flows, nodes, input_node_ids, heap, data, example_ids, num_ex_threads::Int32, node_work::Int32, 
-                                                 soft_reg::Float32, soft_reg_width::Int32, weights)
-    threadid = ((blockIdx().x - one(Int32)) * blockDim().x) + threadIdx().x
-
-    node_batch, ex_id = fldmod1(threadid, num_ex_threads)
-
-    node_start = one(Int32) + (node_batch - one(Int32)) * node_work
-    node_end = min(node_start + node_work - one(Int32), length(input_node_ids))
-
-    @inbounds if ex_id <= length(example_ids)
-        for node_id = node_start : node_end
-            orig_ex_id::Int32 = example_ids[ex_id]
-            orig_node_id::UInt32 = input_node_ids[node_id]
-            node_flow::Float32 = flows[ex_id, orig_node_id]
-            if !isnothing(weights)
-                node_flow *= weights[orig_ex_id]
-            end
-            inputnode = nodes[orig_node_id]::BitsInput
-            variable = inputnode.variable
-            d = dist(inputnode)
-            if d isa BitsCategorical
-                logp = typemin(Float32)
-                for i = 0 : d.num_cats - 1
-                    logp = logsumexp(logp, data[orig_ex_id, variable, i+1] + heap[d.heap_start + i])
-                end
-                for i = 0 : d.num_cats - 1
-                    CUDA.@atomic heap[d.heap_start+d.num_cats+i] += exp(data[orig_ex_id, variable, i+1] + heap[d.heap_start + i] - logp) * node_flow
-                end
-            end
-        end
-    end
-    nothing
-end
-
-function input_flows_circuit_with_reg(flows, bpc, data, example_ids; mine, maxe, soft_reg, soft_reg_width, debug = false, weights = nothing)
-    num_examples = length(example_ids)
-    num_input_nodes = length(bpc.input_node_ids)
-
-    dummy_args = (flows, bpc.nodes, bpc.input_node_ids,
-                  bpc.heap, data, example_ids, Int32(1), Int32(1), Float32(soft_reg), Int32(soft_reg_width), weights)
-    if data isa CuMatrix
-        kernel = @cuda name="input_flows_circuit_with_reg" launch=false input_flows_circuit_with_reg_kernel(dummy_args...)
-    elseif data isa CuArray{Float32, 3}
-        kernel = @cuda name="input_flows_circuit_with_reg" launch=false input_flows_circuit_with_reg_cat_kernel(dummy_args...)
-    else
-        error("Unknown data type") 
-    end
-    config = launch_configuration(kernel.fun)
-
-    threads, blocks, num_example_threads, node_work = 
-        balance_threads(num_input_nodes, num_examples, config; mine, maxe)
-
-    args = (flows, bpc.nodes, bpc.input_node_ids,
-            bpc.heap, data, example_ids, Int32(num_example_threads), Int32(node_work), Float32(soft_reg), 
-            Int32(soft_reg_width), weights)
-    if debug
-        println("Flows of input nodes")
-        @show threads blocks num_example_threads node_work num_nodes num_examples
-        CUDA.@time kernel(args...; threads, blocks)
-    else
-        kernel(args...; threads, blocks)
-    end
-
-    nothing
-end
+# NOTE (packaging): `input_flows_circuit_with_reg` removed here — src-jl/ copy wins (see src/VariationalJuice.jl).
 
 ##################################################################################
 # Downward pass

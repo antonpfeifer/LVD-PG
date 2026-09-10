@@ -17,7 +17,8 @@ from ProgressBar import ProgressBar
 
 from julia import Main as JL
 
-JL.include(os.path.join(os.path.dirname(__file__), "../../VariationalJuice.jl/src/VariationalJuice.jl"))
+JL.include(os.path.join(os.path.dirname(__file__), "../../../VariationalJuice.jl/src/VariationalJuice.jl"))
+JL.eval("using VariationalJuice")
 
 
 class PCVAE(nn.Module):

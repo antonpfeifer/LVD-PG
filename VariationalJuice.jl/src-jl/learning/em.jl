@@ -197,14 +197,7 @@ function weighted_ll(bpc::CuBitsProbCircuit, data::CuArray, weights = nothing; b
     end
 end
 
-function overprint(str)  
-    print("\u1b[1F")
-    #Moves cursor to beginning of the line n (default 1) lines up   
-    print(str)   #prints the new line
-    print("\u1b[0K") 
-
-    println() #prints a new line, i really don't like this arcane codes
-end
+# NOTE (packaging): `overprint` removed here — identical copy kept in src-jl/ (see src/VariationalJuice.jl).
 
 function init_parameters_by_logits(pc::ProbCircuit; mval = 1.0)
     mval = Float32(mval)

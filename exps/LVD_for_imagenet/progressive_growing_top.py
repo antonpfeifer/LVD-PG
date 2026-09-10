@@ -5,7 +5,7 @@ import sys
 import torch 
 
 JL.include(os.path.join(os.path.dirname(__file__), "../../VariationalJuice.jl/src/VariationalJuice.jl"))
-JL.include(os.path.join(os.path.dirname(__file__), "../../VariationalJuice.jl/src-jl/LatentPCs.jl"))
+JL.eval("using VariationalJuice")
 JL.include(os.path.join(os.path.dirname(__file__), "./src/train_PG_top_level_pcs.jl"))
 JL.include(os.path.join(os.path.dirname(__file__), "./src/learn_patch_clt.jl"))
 

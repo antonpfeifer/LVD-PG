@@ -1,5 +1,5 @@
 
-import Main: deepcopy # extend
+import Base: deepcopy # extend (was Main.deepcopy; same function)
 
 function deepcopy(n::ProbCircuit; depth, copy_leaves = false)
     if isinput(n)
