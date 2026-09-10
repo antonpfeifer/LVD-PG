@@ -152,6 +152,10 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     # load model
+    from huggingface_hub.constants import HF_HUB_CACHE
+
+    print(f"Model will be downloaded to: {HF_HUB_CACHE}", flush=True)
+
     model = SentenceTransformer(args.teacher_model, device=device)
 
     # load data
