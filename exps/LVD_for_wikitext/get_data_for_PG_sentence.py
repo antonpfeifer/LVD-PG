@@ -135,9 +135,9 @@ def get_data_for_clusters(
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--max_sentence_size", type=int, default=32)
-    parser.add_argument("--batch_size", type=int, default=8)
-    parser.add_argument("--output_dir", type=str, default="data")
+    parser.add_argument("--max-sentence-size", type=int, default=50)
+    parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--output-dir", type=str, default="data")
     parser.add_argument(
         "--teacher-model",
         type=str,
