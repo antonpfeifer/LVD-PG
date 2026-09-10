@@ -4,7 +4,7 @@
 #SBATCH --tasks-per-node=1
 #SBATCH --partition=gpuh200mini
 #SBATCH --gres=gpu:1
-#SBATCH --mem=300G
+#SBATCH --mem=32G
 
 #SBATCH --job-name=wikitext_bert_annotation
 #SBATCH --output=get_data_for_PG_160626.dat
