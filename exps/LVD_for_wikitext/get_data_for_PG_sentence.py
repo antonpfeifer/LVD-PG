@@ -37,7 +37,7 @@ def get_data_for_clusters(
     ) as metadata_file:
         json.dump(
             {
-                "model_name": model.model_name_or_path,
+                "model_name": model[0].auto_model.config._name_or_path,
                 "pad_token_id": pad_token_id,
                 "vocab_size": model.tokenizer.vocab_size,
             },

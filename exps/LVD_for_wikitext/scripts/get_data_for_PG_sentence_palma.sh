@@ -17,6 +17,7 @@ set +a
 
 export SENTENCE_TRANSFORMERS_HOME="/scratch/tmp/mpfeife3/bachelorarbeit"
 export HUGGINGFACE_HUB_CACHE="/scratch/tmp/mpfeife3/bachelorarbeit/hf_cache"
+export TOKENIZER_DOWNLOAD_DIR="/scratch/tmp/mpfeife3/bachelorarbeit/tokenizer_cache"
 
 source /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/etc/profile.d/conda.sh
 conda activate lvd-pg
