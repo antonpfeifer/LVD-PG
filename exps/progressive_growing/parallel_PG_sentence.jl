@@ -7,6 +7,7 @@ using VariationalJuice
 cd(@__DIR__)
 include("model/split.jl")
 include("model/evaluation_result.jl")
+include("model/pg_config.jl")
 push!(PyVector(pyimport("sys")["path"]), "./src")
 
 py"""
@@ -47,8 +48,8 @@ function kmeans(trn_features, val_features, num_independent_clusters::Int, datas
     return cls_ids_trn, cls_ids_val
 end
 
-function main(; dataset, start_cid, end_cid, num_sentence_clusters=400, num_token_clusters=200, kwargs...)
-    data_dir = "data/data_$(dataset)"
+function main(; dataset, start_cid, end_cid, pg_config::ProgressiveGrowingConfig)
+    data_dir = "../LVD_for_wikitext/data/data_$(dataset)"
     trn_data = Array{Int32}(np.load(joinpath(data_dir, "data_trn.npy")))
     val_data = Array{Int32}(np.load(joinpath(data_dir, "data_val.npy")))
     token_trn_features = Array{Float32}(np.load(joinpath(data_dir, "tokenfeat_trn.npy"), mmap_mode="r"))
@@ -61,11 +62,11 @@ function main(; dataset, start_cid, end_cid, num_sentence_clusters=400, num_toke
 
     @assert size(trn_data, 2) == size(token_trn_features, 2) "the number of token positions (max sentence size) should be the same for raw token data and annotated token data"
 
-    sentence_cid_trn, sentence_cid_val = kmeans(sentence_trn_features, sentence_val_features, num_sentence_clusters, dataset, "sentence")
+    sentence_cid_trn, sentence_cid_val = kmeans(sentence_trn_features, sentence_val_features, pg_config.num_sentence_clusters, dataset, "sentence")
 
     num_token_positions = size(trn_data, 2) # aka max_sentence_size
 
-    task_identifier = "pos$(num_token_positions)_token$(num_token_clusters)_indep$(num_sentence_clusters)_init$(Dict(kwargs...)[:num_init_clusters])_final$(Dict(kwargs...)[:num_final_clusters])"
+    task_identifier = "pos$(num_token_positions)_token$(pg_config.num_token_clusters)_indep$(pg_config.num_sentence_clusters)_init$(pg_config.num_init_clusters)_final$(pg_config.num_final_clusters)"
     ll_file_name = "temp/temp_$(dataset)/logs/$(task_identifier)_parallel.log"
     if !isdir("temp/temp_$(dataset)/logs")
         mkpath("temp/temp_$(dataset)/logs")
@@ -91,21 +92,21 @@ function main(; dataset, start_cid, end_cid, num_sentence_clusters=400, num_toke
 
         # CLUSTER TOKENS
 
-        token_cids_trn = zeros(Int64, trn_weight, num_token_positions)
-        token_cids_val = zeros(Int64, val_weight, num_token_positions)
+        token_cids_trn = zeros(Int32, trn_weight, num_token_positions)
+        token_cids_val = zeros(Int32, val_weight, num_token_positions)
 
         for pos = 1:num_token_positions
             tokens_cid_pos_trn_features = token_trn_features[trn_filter, pos, :] # tokens from sentence cid at pos
             tokens_cid_pos_val_features = token_val_features[val_filter, pos, :]
 
-            pos_cids_trn, pos_cids_val = kmeans(tokens_cid_pos_trn_features, tokens_cid_pos_val_features, num_token_clusters, dataset, "token", pos)
+            pos_cids_trn, pos_cids_val = kmeans(tokens_cid_pos_trn_features, tokens_cid_pos_val_features, pg_config.num_token_clusters, dataset, "token", pos)
 
             token_cids_trn[:, pos] .= pos_cids_trn
             token_cids_val[:, pos] .= pos_cids_val
         end
 
 
-        effective_final_clusters = max(1, min(Dict(kwargs...)[:num_final_clusters], trn_weight))
+        effective_final_clusters = max(1, min(pg_config.num_final_clusters, trn_weight))
         final_pc_fname = "temp/temp_$(dataset)/final_pcs/$(task_identifier)/$(cid)/final_pc_$(effective_final_clusters).jpc"
         if isfile(final_pc_fname)
             println(">>> Existing mhpc #$(cid) <<<")
@@ -122,16 +123,13 @@ function main(; dataset, start_cid, end_cid, num_sentence_clusters=400, num_toke
         val_features_subset = Array(py"subset_rows_1based"(sentence_val_features, val_idx))
 
         trn_bpd, val_bpd = progressive_growing(
-            dataset,
-            token_cids_trn,
-            trn_data[trn_filter, :],
-            trn_features_subset,
-            token_cids_val,
-            val_data[val_filter, :],
-            val_features_subset,
-            cid,
-            task_identifier;
-            num_token_clusters=num_token_clusters
+            dataset_label=dataset,
+            token_cids=Split{AbstractArray{Int32, 2}}(token_cids_trn, token_cids_val),
+            raw_data=Split{AbstractArray{Int32, 2}}(trn_data[trn_filter, :], val_data[val_filter, :]),
+            sentence_features=Split{AbstractArray{Float32, 2}}(trn_features_subset, val_features_subset),
+            global_task_id=cid,
+            task_identifier=task_identifier,
+            config=pg_config
         )
         total_trn_bpd += trn_bpd
         mean_trn_bpd = total_trn_bpd / (cid - start_cid + 1)
@@ -317,14 +315,12 @@ function log_evaluation(eval::EvaluationResult, mhbpc, num_clusters::Integer, nu
     end
 end
 
-function progressive_growing(
-    dataset_label, trn_token_cids, trn_data, trn_features, val_token_cids, val_data, val_features,
-    global_task_id, task_identifier;
-    num_token_clusters::Int=200, num_init_clusters=1, num_final_clusters=5, num_latents=16, max_grow_frac=0.4, batch_size=512, prune_threshold=0.001,
-    emission_alpha::Float64=1.0
+function progressive_growing(;
+    dataset_label, token_cids::Split{AbstractArray{Int32, 2}}, raw_data::Split{AbstractArray{Int64, 2}}, sentence_features::Split{AbstractArray{Float32, 2}},
+    global_task_id, task_identifier, config::ProgressiveGrowingConfig
 )
     # Load tokenizer/model metadata written by the earlier Python preprocessing step.
-    metadata_path = joinpath("data", "data_$(dataset_label)", "model_metadata.json")
+    metadata_path = joinpath("..", "LVD_for_wikitext", "data", "data_$(dataset_label)", "model_metadata.json")
     @assert isfile(metadata_path) "missing model metadata file: $(metadata_path)"
     metadata_file = pyimport("builtins").open(metadata_path, "r", encoding="utf-8")
     metadata = pyimport("json").load(metadata_file)
@@ -333,28 +329,27 @@ function progressive_growing(
     pad_token_id = Int(metadata["pad_token_id"])
     vocab_size = Int(metadata["vocab_size"])
 
-    @assert size(trn_token_cids, 2) == size(trn_data, 2) "token cluster assignments and raw token data do not have the same number of positions (max sentence size)"
+    @assert size(token_cids.trn, 2) == size(raw_data.trn, 2) "token cluster assignments and raw token data do not have the same number of positions (max sentence size)"
 
-    num_examples = Split{Int}(size(trn_token_cids, 1), size(val_token_cids, 1))
-    num_token_positions::Int = size(trn_token_cids, 2)
+    num_examples = Split{Int}(size(token_cids.trn, 1), size(token_cids.val, 1))
+    num_token_positions::Int = size(token_cids.trn, 2)
 
     # KMeans ids are 1-based; Categorical leaves, Chow-Liu MI, and GPU kernels are 0-based.
-    trn_token_cids = Int32.(trn_token_cids) .- Int32(1)
-    val_token_cids = Int32.(val_token_cids) .- Int32(1)
+    trn_token_cids = Int32.(token_cids.trn) .- Int32(1)
+    val_token_cids = Int32.(token_cids.val) .- Int32(1)
     if !isempty(trn_token_cids)
-        @assert minimum(trn_token_cids) >= 0 && maximum(trn_token_cids) < num_token_clusters "token cluster ids outside 0:$(num_token_clusters - 1)"
+        @assert minimum(trn_token_cids) >= 0 && maximum(trn_token_cids) < config.num_token_clusters "token cluster ids outside 0:$(config.num_token_clusters - 1)"
     end
     if !isempty(val_token_cids)
-        @assert minimum(val_token_cids) >= 0 && maximum(val_token_cids) < num_token_clusters "val token cluster ids outside 0:$(num_token_clusters - 1)"
+        @assert minimum(val_token_cids) >= 0 && maximum(val_token_cids) < config.num_token_clusters "val token cluster ids outside 0:$(config.num_token_clusters - 1)"
     end
 
     # Some global positionwise clusters can be extremely small. FAISS KMeans
     # requires n_examples >= n_clusters, so cap local cluster counts per task.
-    num_init_clusters = max(1, min(num_init_clusters, num_examples.trn))
-    num_final_clusters = max(1, min(num_final_clusters, num_examples.trn))
+    num_init_clusters = max(1, min(config.num_init_clusters, num_examples.trn))
+    num_final_clusters = max(1, min(config.num_final_clusters, num_examples.trn))
 
-
-    effective_batch_size = Split(min(batch_size, num_examples.trn), min(128, max(num_examples.val, 1)))
+    effective_batch_size = Split(min(config.batch_size, num_examples.trn), min(128, max(num_examples.val, 1)))
 
     token_cids_gpu = Split(cu(trn_token_cids), cu(val_token_cids))
 
@@ -376,9 +371,9 @@ function progressive_growing(
     # Perform initial KMeans clustering
     # print("> Clustering all samples into $(num_init_clusters) clusters... ")
     t = @elapsed begin
-        centroids = py"train_kmeans_model"(trn_features, num_init_clusters)
-        trn_cls_ids = Int64.(py"pred_kmeans_clusters"(centroids, trn_features))
-        val_cls_ids = Int64.(py"pred_kmeans_clusters"(centroids, val_features))
+        centroids = py"train_kmeans_model"(sentence_features.trn, config.num_init_clusters)
+        trn_cls_ids = Int64.(py"pred_kmeans_clusters"(centroids, sentence_features.trn))
+        val_cls_ids = Int64.(py"pred_kmeans_clusters"(centroids, sentence_features.val))
     end
     # println(@sprintf("done (%.2fs)", t))
     GC.gc()
@@ -392,20 +387,20 @@ function progressive_growing(
     if !isdir(base_dir1)
         mkpath(base_dir1)
     end
-    init_pc_fname = joinpath(base_dir, "init_pc_$(num_init_clusters).jpc")
+    init_pc_fname = joinpath(base_dir, "init_pc_$(config.num_init_clusters).jpc")
     # final_pc_fname = joinpath(base_dir1, "final_pc_$(num_final_clusters).jpc")
 
     if !isfile(init_pc_fname)
         println("> Constructing initial multi-headed PC...")
         token_cid_datasets = []
-        for cid = 1:num_init_clusters
+        for cid = 1:config.num_init_clusters
             token_cid_dataset = trn_token_cids[trn_cls_ids.==cid, :]
             # Convert to CPU Array explicitly just in case to avoid passing mixed arrays
             push!(token_cid_datasets, Array(token_cid_dataset))
         end
         println("dataset: $(dataset_label)")
-        pcs = joined_hclt(token_cid_datasets, num_latents; num_cats=num_token_clusters, input_type=Categorical)
-        pcs = pcs[1:num_init_clusters]
+        pcs = joined_hclt(token_cid_datasets, config.num_hclt_latents; num_cats=config.num_token_clusters, input_type=Categorical)
+        pcs = pcs[1:config.num_init_clusters]
         init_parameters(pcs; perturbation=0.4)
 
         write_mhpc(init_pc_fname, pcs)
@@ -445,7 +440,7 @@ function progressive_growing(
     end
     final_pc_fname = final_pc_fnames[1]
 
-    for iter = num_init_clusters:2*num_final_clusters
+    for iter = config.num_init_clusters:2*num_final_clusters
         println("==== Iteration $(iter) ====")
 
         num_clusters = length(pcs)
@@ -479,7 +474,7 @@ function progressive_growing(
 
         ## Step 2: prune multi-head PC
         print("> Pruning multi-head PC...")
-        t = @elapsed pcs = prune_pc(pcs, token_cids_gpu.trn, trn_head_mask_gpu; batch_size=effective_batch_size.trn, prune_threshold, mhbpc)
+        t = @elapsed pcs = prune_pc(pcs, token_cids_gpu.trn, trn_head_mask_gpu; batch_size=effective_batch_size.trn, prune_threshold=config.prune_threshold, mhbpc)
         println(@sprintf("done (%.2fs)", t))
 
         ## Step 3: evaluate and re-assign cluster ids
@@ -618,13 +613,13 @@ function progressive_growing(
         for (i, cluster) in enumerate(grow_cls_true)
             trn_filter = (trn_cls_ids .== cluster)
             if i == 1
-                all_trn_data = trn_data[trn_filter, :]
-                all_trn_features = trn_features[trn_filter, :]
-                old_centroids = mean(trn_features[trn_filter, :], dims=1)
+                all_trn_data = raw_data.trn[trn_filter, :]
+                all_trn_features = sentence_features.trn[trn_filter, :]
+                old_centroids = mean(sentence_features.trn[trn_filter, :], dims=1)
             else
-                all_trn_data = cat(all_trn_data, trn_data[trn_filter, :], dims=1)
-                all_trn_features = cat(all_trn_features, trn_features[trn_filter, :], dims=1)
-                old_centroids = cat(old_centroids, mean(trn_features[trn_filter, :], dims=1), dims=1)
+                all_trn_data = cat(all_trn_data, raw_data.trn[trn_filter, :], dims=1)
+                all_trn_features = cat(all_trn_features, sentence_features.trn[trn_filter, :], dims=1)
+                old_centroids = cat(old_centroids, mean(sentence_features.trn[trn_filter, :], dims=1), dims=1)
             end
         end
 
@@ -635,8 +630,8 @@ function progressive_growing(
             trn_filter .|= (trn_cls_ids .== cluster)
             val_filter .|= (val_cls_ids .== cluster)
         end
-        cls_ids_trn = Int64.(py"pred_kmeans_clusters"(centroids, trn_features[trn_filter, :]))
-        cls_ids_val = Int64.(py"pred_kmeans_clusters"(centroids, val_features[val_filter, :]))
+        cls_ids_trn = Int64.(py"pred_kmeans_clusters"(centroids, sentence_features.trn[trn_filter, :]))
+        cls_ids_val = Int64.(py"pred_kmeans_clusters"(centroids, sentence_features.val[val_filter, :]))
         GC.gc()
         for j = 1:target_n_clusters
             if j <= length(grow_cls_true)
@@ -651,19 +646,19 @@ function progressive_growing(
 
     # Fit once at the end: phi depends only on (trn_data, trn_token_cids), so this is
     # identical to fitting before the loop but keeps ~8GB out of peak loop memory.
-    token_emissions = fit_token_emissions(trn_data, trn_token_cids;
-        num_token_clusters=num_token_clusters, vocab_size=vocab_size, alpha=emission_alpha, pad_id=pad_token_id)
+    token_emissions = fit_token_emissions(raw_data.trn, trn_token_cids;
+        num_token_clusters=config.num_token_clusters, vocab_size=vocab_size, alpha=config.token_emission_alpha, pad_id=pad_token_id)
     token_views = compile_token_view(token_emissions, pcs)
 
-    data_gpu = Split(cu(trn_data), cu(val_data))
+    data_gpu = Split(cu(raw_data.trn), cu(raw_data.val))
     token_pcs = get_token_pcs(pcs, num_token_positions, token_views)
     mhbpc_tok = CuMultiHeadBitsProbCircuit(token_pcs)
 
-    num_tok_examples = Split(size(trn_data, 1), size(val_data, 1))
+    num_tok_examples = Split(size(raw_data.trn, 1), size(raw_data.val, 1))
 
     eval_tok = evaluate_pcs(mhbpc_tok, data_gpu, effective_batch_size, Split(trn_cls_ids, val_cls_ids), num_token_positions, length(pcs), num_tok_examples.val)
 
-    log_evaluation(eval_tok, mhbpc_tok, num_clusters, length(token_pcs); filename="temp/temp_$(dataset_label)/logs/$(task_identifier)/tokens/$(global_task_id).log")
+    log_evaluation(eval_tok, mhbpc_tok, length(pcs), length(token_pcs); filename="temp/temp_$(dataset_label)/logs/$(task_identifier)/tokens/$(global_task_id).log")
 
     trn_bpd, val_bpd
 end
@@ -673,13 +668,28 @@ end_cid = parse(Int, ARGS[2])
 num_independent_clusters = parse(Int, ARGS[3])
 dataset = ARGS[4]
 println("dataset: $(dataset)")
+
+num_token_clusters = 200
+num_sentence_clusters = 400
+num_hclt_latents = 16
 num_init_clusters = 2
 num_final_clusters = 4
+batch_size = 256
+max_grow_frac = 0.4
+prune_threshold = 1e-4
+token_emission_alpha = 1.0
 
-num_latents = dataset == "wikitext" ? 2 : 16
-
-teacher_vocab_size = 151936
-
-
-main(; dataset, start_cid, end_cid, num_independent_clusters, num_init_clusters=num_init_clusters, num_final_clusters=num_final_clusters, num_latents=num_latents, max_grow_frac=0.4, batch_size=32,
-    prune_threshold=1e-4)
+main(; dataset=dataset,
+    start_cid=start_cid,
+    end_cid=end_cid,
+    pg_config=ProgressiveGrowingConfig(
+        num_token_clusters,
+        num_sentence_clusters,
+        num_hclt_latents,
+        num_init_clusters,
+        num_final_clusters,
+        batch_size,
+        max_grow_frac,
+        prune_threshold,
+        token_emission_alpha
+    ))
