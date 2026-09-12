@@ -21,5 +21,5 @@ julia -e 'using PyCall; println("PyCall Python: ", PyCall.pyprogramname); pyimpo
 
 julia_project_location=BASE_PATH
 
-CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" "${BASE_PATH}/exps/progressive_growing/parallel_PG.jl" 1 3200 200 "wikitext"
-CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" "${BASE_PATH}/exps/progressive_growing/parallel_PG.jl" 3201 6400 200 "wikitext"
+CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" "${BASE_PATH}/exps/progressive_growing/parallel_PG_sentence.jl" 1 200 400 "wikitext"
+CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" "${BASE_PATH}/exps/progressive_growing/parallel_PG_sentence.jl" 201 400 400 "wikitext"
