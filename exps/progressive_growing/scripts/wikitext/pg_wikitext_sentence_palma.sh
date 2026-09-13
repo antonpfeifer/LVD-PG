@@ -10,7 +10,7 @@ BASE_PATH="/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing"
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=anton.pfeifer@uni-muenster.de
 
-#SBATCH --mem=128G
+#SBATCH --mem=256G
 #SBATCH --partition=gpuh200mini
 #SBATCH --gres=gpu:1
 
