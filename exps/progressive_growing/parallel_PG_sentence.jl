@@ -49,7 +49,8 @@ function kmeans(trn_features, val_features, num_independent_clusters::Int, datas
 end
 
 function main(; dataset, start_cid, end_cid, pg_config::ProgressiveGrowingConfig)
-    data_dir = "../LVD_for_wikitext/data/data_$(dataset)"
+    base_dir = ENV["BASE_DIR"]
+    data_dir = "$(base_dir)/LVD_for_wikitext/data/data_$(dataset)"
     trn_data = Array{Int32}(np.load(joinpath(data_dir, "data_trn.npy")))
     val_data = Array{Int32}(np.load(joinpath(data_dir, "data_val.npy")))
     token_trn_features = Array{Float32}(np.load(joinpath(data_dir, "tokenfeat_trn.npy"), mmap_mode="r"))
