@@ -19,11 +19,11 @@ which julia
 
 julia -e 'using PyCall; println("PyCall Python: ", PyCall.pyprogramname); pyimport("faiss"); println("faiss ok")'
 
-julia_project_location=BASE_PATH
+JULIA_PROJ=BASE_PATH
 
-julia --project="${julia_project_location}" -e 'using Pkg; Pkg.project().path'
-julia --project="${julia_project_location}" -e 'using Pkg; Pkg.activate("${julia_project_location}")'
-julia --project="${julia_project_location}" -e 'using Pkg; Pkg.instantiate()'
+julia --project="${JULIA_PROJ}" -e 'using Pkg; Pkg.project().path'
+julia --project="${JULIA_PROJ}" -e "using Pkg; Pkg.activate(\"${JULIA_PROJ}\")"
+julia --project="${JULIA_PROJ}" -e 'using Pkg; Pkg.instantiate()'
 
-CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" "${BASE_PATH}/exps/progressive_growing/parallel_PG_sentence.jl" 1 200 400 "wikitext"
-CUDA_VISIBLE_DEVICES=0 julia --project="${julia_project_location}" "${BASE_PATH}/exps/progressive_growing/parallel_PG_sentence.jl" 201 400 400 "wikitext"
+CUDA_VISIBLE_DEVICES=0 julia --project="${JULIA_PROJ}" "${BASE_PATH}/exps/progressive_growing/parallel_PG_sentence.jl" 1 200 400 "wikitext"
+CUDA_VISIBLE_DEVICES=0 julia --project="${JULIA_PROJ}" "${BASE_PATH}/exps/progressive_growing/parallel_PG_sentence.jl" 201 400 400 "wikitext"
