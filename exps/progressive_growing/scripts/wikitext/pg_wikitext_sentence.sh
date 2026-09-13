@@ -5,7 +5,7 @@ set -e
 # aborts activation with: JULIA_DEPOT_PATH: unbound variable.
 set +u
 export JULIA_DEPOT_PATH="${JULIA_DEPOT_PATH:-}"
-BASE_PATH="/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg"
+export BASE_PATH="/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg"
 source /scratch/tmp/mpfeife3/bachelorarbeit/miniconda/etc/profile.d/conda.sh
 conda activate lvd-pg
 

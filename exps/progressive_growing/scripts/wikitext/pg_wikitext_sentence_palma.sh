@@ -12,6 +12,4 @@
 #SBATCH --partition=gpuh200mini
 #SBATCH --gres=gpu:1
 
-BASE_PATH="/scratch/tmp/mpfeife3/bachelorarbeit/lvd-pg/exps/progressive_growing"
-
 srun bash pg_wikitext_sentence.sh
