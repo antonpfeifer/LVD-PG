@@ -19,9 +19,9 @@ which julia
 
 julia -e 'using PyCall; println("PyCall Python: ", PyCall.pyprogramname); pyimport("faiss"); println("faiss ok")'
 
-JULIA_PROJ=BASE_PATH
+JULIA_PROJ=$BASE_PATH
 
-julia --project="${JULIA_PROJ}" -e 'using Pkg; Pkg.project().path'
+julia --project="${JULIA_PROJ}" -e 'using Pkg; println(Pkg.project().path)'
 julia --project="${JULIA_PROJ}" -e "using Pkg; Pkg.activate(\"${JULIA_PROJ}\")"
 julia --project="${JULIA_PROJ}" -e 'using Pkg; Pkg.instantiate()'
 
