@@ -6,12 +6,16 @@ import numpy as np
 
 def _train_2d_kmeans(train_features, n_clusters, gpu_id=0, centroids=None):
     train_features = np.ascontiguousarray(train_features.astype(np.float32))
+    # FAISS requires n_samples >= n_clusters; cap defensively so tiny
+    # progressive-growing clusters degrade gracefully instead of crashing.
+    n_clusters = max(1, min(int(n_clusters), train_features.shape[0]))
+    if centroids is not None:
+        centroids = np.ascontiguousarray(
+            np.array(centroids).astype(np.float32).reshape(-1)
+        )[: n_clusters * train_features.shape[1]]
     kmeans = faiss.Clustering(train_features.shape[1], n_clusters)
     if centroids is not None:
-        faiss.copy_array_to_vector(
-            np.ascontiguousarray(np.array(centroids).astype(np.float32).reshape(-1)),
-            kmeans.centroids,
-        )
+        faiss.copy_array_to_vector(centroids, kmeans.centroids)
     kmeans.verbose = False
     kmeans.niter = 200
     kmeans.nredo = 5
