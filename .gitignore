@@ -17,11 +17,11 @@ __pycache__
 *.jld
 
 .env
-<<<<<<< Updated upstream
+.DS_Store
 
 /data/**
 *res.txt
 exps/progressive_growing/pg_logs_*.sh
-=======
-.DS_Store
->>>>>>> Stashed changes
+
+# Slurm default job outputs (job logs under temp/logs/*.dat are kept by convention)
+slurm-*.out
