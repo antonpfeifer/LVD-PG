@@ -16,12 +16,31 @@ import get_data_for_PG_sentence  # noqa: E402
 
 class FakeTokenizer:
     pad_token_id = 0
+    vocab_size = 1
+
+
+class _FakeConfig:
+    _name_or_path = "fake-model"
+
+
+class _FakeAutoModel:
+    config = _FakeConfig()
+
+
+class _FakeSubmodule:
+    auto_model = _FakeAutoModel()
 
 
 class BFloat16Model:
     tokenizer = FakeTokenizer()
 
+    def __getitem__(self, idx):
+        return _FakeSubmodule()
+
     def get_sentence_embedding_dimension(self) -> int:
+        return 3
+
+    def get_embedding_dimension(self) -> int:
         return 3
 
     def eval(self) -> None:
@@ -50,7 +69,8 @@ class SingleBatchLoader:
 
 
 class FeatureExtractionTests(unittest.TestCase):
-    def test_saves_bfloat16_model_embeddings_as_float32(self) -> None:
+    def test_saves_bfloat16_model_embeddings_as_float16(self) -> None:
+        get_data_for_PG_sentence.device = "cpu"
         with tempfile.TemporaryDirectory() as output_dir:
             get_data_for_PG_sentence.get_data_for_clusters(
                 max_sentence_size=2,
@@ -63,8 +83,8 @@ class FeatureExtractionTests(unittest.TestCase):
             token_features = np.load(Path(output_dir) / "tokenfeat_train.npy")
             sentence_features = np.load(Path(output_dir) / "sentencefeat_train.npy")
 
-        self.assertEqual(token_features.dtype, np.float32)
-        self.assertEqual(sentence_features.dtype, np.float32)
+        self.assertEqual(token_features.dtype, np.float16)
+        self.assertEqual(sentence_features.dtype, np.float16)
         np.testing.assert_array_equal(token_features, np.ones((1, 2, 3)))
         np.testing.assert_array_equal(sentence_features, np.ones((1, 3)))
 

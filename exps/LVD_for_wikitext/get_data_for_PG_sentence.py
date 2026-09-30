@@ -9,7 +9,26 @@ from huggingface_loader import get_hf_dataloader_sentence
 from jaxtyping import Float, Int
 from sentence_transformers import SentenceTransformer
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cuda"
+
+
+def require_cuda(allow_cpu: bool) -> str:
+    print(
+        f"torch={torch.__version__} cuda_build={torch.version.cuda} "
+        f"available={torch.cuda.is_available()} "
+        f"devices={torch.cuda.device_count() if torch.cuda.is_available() else 0}",
+        flush=True,
+    )
+    if torch.cuda.is_available():
+        print(f"GPU: {torch.cuda.get_device_name(0)}", flush=True)
+        return "cuda"
+    if allow_cpu:
+        print("WARNING: running on CPU (--allow-cpu)", flush=True)
+        return "cpu"
+    raise RuntimeError(
+        "torch.cuda.is_available() is False: CPU-only torch build or no GPU visible. "
+        "Refusing to annotate on CPU (see --allow-cpu to override)."
+    )
 
 
 def get_data_for_clusters(
@@ -53,13 +72,13 @@ def get_data_for_clusters(
     token_features = np.lib.format.open_memmap(
         os.path.join(output_dir, f"tokenfeat_{split}.npy"),
         mode="w+",
-        dtype=np.float32,
+        dtype=np.float16,
         shape=(num_sentences, max_sentence_size, embed_size),
     )
     sentence_features = np.lib.format.open_memmap(
         os.path.join(output_dir, f"sentencefeat_{split}.npy"),
         mode="w+",
-        dtype=np.float32,
+        dtype=np.float16,
         shape=(num_sentences, embed_size),
     )
 
@@ -106,19 +125,26 @@ def get_data_for_clusters(
             token_features[sentence_count:next_sentence_count] = (
                 batch_token_features.detach()
                 .cpu()
-                .to(dtype=torch.float32)
+                .to(dtype=torch.float16)
                 .numpy()
             )
             sentence_features[sentence_count:next_sentence_count] = (
                 batch_sentence_features.detach()
                 .cpu()
-                .to(dtype=torch.float32)
+                .to(dtype=torch.float16)
                 .numpy()
             )
             sentence_count = next_sentence_count
 
             print(
                 f"{split}: batch {batch_index + 1}/{len(data_loader)} "
+                f"saved sentences through {sentence_count} "
+                f"cuda_alloc={torch.cuda.memory_allocated() / 1e9:.2f}G "
+                f"cuda_reserved={torch.cuda.memory_reserved() / 1e9:.2f}G "
+                f"cuda_max_alloc={torch.cuda.max_memory_allocated() / 1e9:.2f}G "
+                f"cuda_max_reserved={torch.cuda.max_memory_reserved() / 1e9:.2f}G"
+                if torch.cuda.is_available()
+                else f"{split}: batch {batch_index + 1}/{len(data_loader)} "
                 f"saved sentences through {sentence_count}",
                 flush=True,
             )
@@ -146,7 +172,15 @@ def main():
     parser.add_argument("--max-sentences", type=int, default=None)
     parser.add_argument("--dataset", default="wikimedia/wikipedia")
     parser.add_argument("--train-split-ratio", type=float, default=0.8)
+    parser.add_argument(
+        "--allow-cpu",
+        action="store_true",
+        help="Allow running on CPU (default: require CUDA and fail fast otherwise)",
+    )
     args = parser.parse_args()
+
+    global device
+    device = require_cuda(args.allow_cpu)
 
     # make output dir
     os.makedirs(args.output_dir, exist_ok=True)
@@ -156,7 +190,19 @@ def main():
 
     print(f"Model will be downloaded to: {HF_HUB_CACHE}", flush=True)
 
-    model = SentenceTransformer(args.teacher_model, device=device)
+    model = SentenceTransformer(
+        args.teacher_model,
+        device=device,
+        model_kwargs={"torch_dtype": torch.bfloat16},
+    )
+    print(f"Model dtype: {next(model[0].auto_model.parameters()).dtype}", flush=True)
+    if torch.cuda.is_available():
+        print(
+            f"CUDA after load: allocated={torch.cuda.memory_allocated() / 1e9:.2f}G "
+            f"reserved={torch.cuda.memory_reserved() / 1e9:.2f}G",
+            flush=True,
+        )
+        torch.cuda.reset_peak_memory_stats()
 
     # load data
     train_loader, test_loader = get_hf_dataloader_sentence(
