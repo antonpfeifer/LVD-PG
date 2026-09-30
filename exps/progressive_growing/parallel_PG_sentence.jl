@@ -885,6 +885,8 @@ function progressive_growing(;
 
     eval_tok = evaluate_pcs(mhbpc_tok, data_gpu, effective_batch_size, Split(trn_cls_ids, val_cls_ids), num_token_positions, length(pcs), num_tok_examples.val; trn_lens=trn_tok_lens, val_lens=val_tok_lens)
 
+    print("> Eval on Dataset with Tokens: ")
+
     log_evaluation(eval_tok, mhbpc_tok, length(pcs), length(token_pcs); filename="temp/temp_$(dataset_label)/logs/$(task_identifier)/tokens/$(global_task_id).log")
 
     trn_bpd, val_bpd
