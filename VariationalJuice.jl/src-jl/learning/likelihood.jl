@@ -4,12 +4,17 @@ using ProbabilisticCircuits: isfirst, islast, ispartial, isonlysubedge
 
 
 soft_loglikelihood(d::BitsCategorical, value, heap, soft_reg::Float32, soft_reg_width::Int32) = begin
-    logp = heap[d.heap_start + UInt32(value)]
+    # NOTE: the parameter heap can exceed 2^31 entries for large-vocab token
+    # PCs (~2.5e9 for wikitext). Index it in 64-bit: CUDA.jl preserves the
+    # integer type in device code, so a 32-bit index makes LLVM emit a 32-bit
+    # GEP whose sign extension wraps heap_start + value >= 2^31 to a negative
+    # address (CUDA error 700, illegal memory access).
+    logp = heap[Int64(d.heap_start) + Int64(value)]
     c_start = max(0, value - soft_reg_width ÷ 2)
     c_end = min(c_start + soft_reg_width - 1, d.num_cats - 1)
     sp = zero(Float32)
     for cat_idx = c_start : c_end
-        sp += exp(heap[d.heap_start + cat_idx])
+        sp += exp(heap[Int64(d.heap_start) + Int64(cat_idx)])
     end
     sp /= (c_end - c_start + 1)
     PCs.logsumexp(logp + log(one(Float32) - soft_reg), log(sp) + log(soft_reg))
