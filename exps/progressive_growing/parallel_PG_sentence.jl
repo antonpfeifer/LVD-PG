@@ -89,6 +89,26 @@ function kmeans(trn_features, val_features, num_independent_clusters::Int, datas
         cls_ids_trn = data["sentence_cls_ids_trn"]
         cls_ids_val = get(data, "sentence_cls_ids_val", Int64[])
     end
+    if length(cls_ids_trn) != size(trn_features, 1) || (!isempty(cls_ids_val) && length(cls_ids_val) != size(val_features, 1))
+        # Stale cache guard: dataset grew from 80k/20k to 8M/2M without
+        # invalidating the cache. Reject silently-mismatched lengths here
+        # instead of failing later with a BoundsError on trn_data[filter, :].
+        @warn "Ignoring stale kmeans cache $(cls_file_name) (cache trn=$(length(cls_ids_trn))/val=$(length(cls_ids_val)) vs data trn=$(size(trn_features, 1))/val=$(size(val_features, 1))). Recomputing."
+        rm(cls_file_name; force=true)
+        print("> Global clustering into $(num_independent_clusters) clusters... ")
+        t = @elapsed begin
+            centroids = py"train_kmeans_model"(trn_features, num_independent_clusters)
+            cls_ids_trn = Int64.(py"pred_kmeans_clusters"(centroids, trn_features))
+            cls_ids_val = Int64.(py"pred_kmeans_clusters"(centroids, val_features))
+        end
+        println(@sprintf("done (%.2fs)", t))
+        GC.gc()
+        to_write = Dict{String,Any}("sentence_cls_ids_trn" => cls_ids_trn)
+        if !isempty(cls_ids_val)
+            to_write["sentence_cls_ids_val"] = cls_ids_val
+        end
+        NPZ.npzwrite(cls_file_name, to_write)
+    end
     return cls_ids_trn, cls_ids_val
 end
 
@@ -140,6 +160,28 @@ function main(; dataset, start_cid, end_cid, pg_config::ProgressiveGrowingConfig
             continue
         end
 
+        # Done-check BEFORE token clustering: the per-position FAISS runs
+        # below cost hours per cid, so skipped cids must not pay them.
+        # (A cid counts as done only if its final token-level evaluation was
+        # logged: the cluster-level final_pc is written *before* the token
+        # eval, so a crash there would otherwise leave the cid permanently
+        # skipped with no token results.)
+        effective_final_clusters = max(1, min(pg_config.num_final_clusters, trn_weight))
+        final_pc_fname = "temp/temp_$(dataset)/final_pcs/$(task_identifier)/$(cid)/final_pc_$(effective_final_clusters).jpc"
+        token_log_fname = "temp/temp_$(dataset)/logs/$(task_identifier)/tokens/$(cid).log"
+        if isfile(final_pc_fname) && isfile(token_log_fname)
+            println(">>> Existing mhpc #$(cid) <<<")
+            continue
+        end
+        if isfile(final_pc_fname) && !isfile(token_log_fname)
+            # Stale partial artifact: the in-loop checkpoint logic only
+            # breaks out once the final_pc is *written*; resuming with the
+            # file present would grow the circuit through all iterations
+            # (tens of thousands of nodes) and blow up the token tail.
+            # Force a clean rerun instead (init_pc is kept).
+            println(">>> Removing stale final_pc #$(cid) (token eval missing); rerunning <<<")
+            rm(final_pc_fname)
+        end
 
         # CLUSTER TOKENS
         # token_*_features are numpy memmap PyObjects: index them in Python
@@ -165,31 +207,6 @@ function main(; dataset, start_cid, end_cid, pg_config::ProgressiveGrowingConfig
             token_cids_trn[:, pos] .= pos_cids_trn
             token_cids_val[:, pos] .= pos_cids_val
         end
-
-
-        effective_final_clusters = max(1, min(pg_config.num_final_clusters, trn_weight))
-        final_pc_fname = "temp/temp_$(dataset)/final_pcs/$(task_identifier)/$(cid)/final_pc_$(effective_final_clusters).jpc"
-        token_log_fname = "temp/temp_$(dataset)/logs/$(task_identifier)/tokens/$(cid).log"
-        # A cid counts as done only if its final token-level evaluation was
-        # logged: the cluster-level final_pc is written *before* the token
-        # eval, so a crash there (e.g. CUDA error 700) would otherwise leave
-        # the cid permanently skipped with no token results.
-        if isfile(final_pc_fname) && isfile(token_log_fname)
-            println(">>> Existing mhpc #$(cid) <<<")
-            continue
-        end
-        if isfile(final_pc_fname) && !isfile(token_log_fname)
-            # Stale partial artifact: the in-loop checkpoint logic only
-            # breaks out once the final_pc is *written*; resuming with the
-            # file present would grow the circuit through all iterations
-            # (tens of thousands of nodes) and blow up the token tail.
-            # Force a clean rerun instead (init_pc is kept).
-            println(">>> Removing stale final_pc #$(cid) (token eval missing); rerunning <<<")
-            rm(final_pc_fname)
-        end
-
-        trn_idx = findall(trn_filter)
-        val_idx = findall(val_filter)
 
         # sentence_*_features are normal Julia Arrays here, so plain indexing
         # would do; keep the Python path (same as parallel_PG.jl) to stay
@@ -615,7 +632,7 @@ function progressive_growing(;
     init_pc_fname = joinpath(base_dir, "init_pc_$(num_init_clusters).jpc")
     # final_pc_fname = joinpath(base_dir1, "final_pc_$(num_final_clusters).jpc")
 
-    if !isfile(init_pc_fname)
+    function build_init_pc()
         println("> Constructing initial multi-headed PC...")
         token_cid_datasets = []
         for cid = 1:num_init_clusters
@@ -624,14 +641,37 @@ function progressive_growing(;
             push!(token_cid_datasets, Array(token_cid_dataset))
         end
         println("dataset: $(dataset_label)")
-        pcs = joined_hclt(token_cid_datasets, config.num_hclt_latents; num_cats=config.num_token_clusters, input_type=Categorical)
-        pcs = pcs[1:num_init_clusters]
-        init_parameters(pcs; perturbation=0.4)
+        fresh = joined_hclt(token_cid_datasets, config.num_hclt_latents; num_cats=config.num_token_clusters, input_type=Categorical)
+        fresh = fresh[1:num_init_clusters]
+        init_parameters(fresh; perturbation=0.4)
 
-        write_mhpc(init_pc_fname, pcs)
+        write_mhpc(init_pc_fname, fresh)
+        return fresh
+    end
+
+    if !isfile(init_pc_fname)
+        pcs = build_init_pc()
     else
         println("> Loaded initial multi-headed PC")
         pcs = read_mhpc(init_pc_fname)
+        # Self-heal stale init_pcs: the filename encodes only
+        # num_init_clusters, not num_token_clusters, so an init built for a
+        # smaller effective K (e.g. tiny-data era) would pass here but crash
+        # much later in compile_token_view. Detect it now (cheap) and
+        # rebuild instead of wasting a full 50-epoch EM run.
+        leaf_cats_ok = true
+        for pc in pcs
+            foreach(pc) do n
+                if isinput(n) && length(dist(n).logps) != config.num_token_clusters
+                    leaf_cats_ok = false
+                end
+            end
+        end
+        if !leaf_cats_ok
+            @warn "Ignoring stale $(init_pc_fname): leaf categorical size != config.num_token_clusters=$(config.num_token_clusters); rebuilding."
+            rm(init_pc_fname)
+            pcs = build_init_pc()
+        end
     end
 
     ##### Main loop #####
