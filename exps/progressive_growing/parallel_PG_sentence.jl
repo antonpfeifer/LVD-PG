@@ -214,6 +214,9 @@ function main(; dataset, start_cid, end_cid, pg_config::ProgressiveGrowingConfig
         trn_features_subset = Array(py"subset_rows_1based"(sentence_trn_features, trn_idx))
         val_features_subset = Array(py"subset_rows_1based"(sentence_val_features, val_idx))
 
+        trn_features_tokens_subset = Array(py"subset_rows_1based"(token_trn_features, trn_idx))
+        val_features_tokens_subset = Array(py"subset_rows_1based"(token_val_features, trn_idx))
+
         # Downstream structures (HCLT num_cats, token emissions, asserts) must
         # use the capped cluster count so tiny cids stay consistent.
         cid_config = ProgressiveGrowingConfig(
@@ -240,6 +243,7 @@ function main(; dataset, start_cid, end_cid, pg_config::ProgressiveGrowingConfig
                 token_cids=Split{AbstractArray{Int32, 2}}(token_cids_trn, token_cids_val),
                 raw_data=Split{AbstractArray{Int32, 2}}(trn_data[trn_filter, :], val_data[val_filter, :]),
                 sentence_features=Split{AbstractArray{Float32, 2}}(trn_features_subset, val_features_subset),
+                token_features=Split{AbstractArray{Float32, 2}}(trn_features_tokens_subset, val_features_tokens_subset)
                 global_task_id=cid,
                 task_identifier=task_identifier,
                 config=cid_config
@@ -559,6 +563,7 @@ end
 
 function progressive_growing(;
     dataset_label, token_cids::Split{<:AbstractArray{<:Integer, 2}}, raw_data::Split{<:AbstractArray{<:Integer, 2}}, sentence_features::Split{<:AbstractArray{Float32, 2}},
+    token_features::Split{<:AbstractArray{Float32, 3}},
     global_task_id, task_identifier, config::ProgressiveGrowingConfig
 )
     # Load tokenizer/model metadata written by the earlier Python preprocessing step.
@@ -635,13 +640,16 @@ function progressive_growing(;
     function build_init_pc()
         println("> Constructing initial multi-headed PC...")
         token_cid_datasets = []
+        token_feature_datasets = []
         for cid = 1:num_init_clusters
             token_cid_dataset = trn_token_cids[trn_cls_ids.==cid, :]
+            token_feature_dataset = token_features.trn[trn_cls_ids.==cid, :, :]
             # Convert to CPU Array explicitly just in case to avoid passing mixed arrays
             push!(token_cid_datasets, Array(token_cid_dataset))
+            push!(token_feature_datasets, Array(token_feature_dataset))
         end
         println("dataset: $(dataset_label)")
-        fresh = joined_hclt(token_cid_datasets, config.num_hclt_latents; num_cats=config.num_token_clusters, input_type=Categorical)
+        fresh = joined_hclt(token_cid_datasets, token_feature_datasets, config.num_hclt_latents; num_cats=config.num_token_clusters, input_type=Categorical)
         fresh = fresh[1:num_init_clusters]
         init_parameters(fresh; perturbation=0.4)
 
@@ -940,7 +948,7 @@ dataset = ARGS[4]
 println("dataset: $(dataset)")
 
 num_token_clusters = 200
-num_sentence_clusters = 400	
+num_sentence_clusters = 400
 num_hclt_latents = 16
 num_init_clusters = 2
 num_final_clusters = 4
